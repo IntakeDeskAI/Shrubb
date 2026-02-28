@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Stem -->
+  <line x1="38" y1="10" x2="38" y2="72"/>
+  <!-- Circle of the b -->
+  <circle cx="58" cy="82" r="28"/>
+  <!-- Connection from stem to circle -->
+  <path d="M38 72 Q38 54 58 54"/>
+  <!-- Left leaf -->
+  <path d="M28 28 Q20 10 34 6 Q38 18 28 28Z" fill="currentColor" stroke="none"/>
+  <!-- Right leaf -->
+  <path d="M42 22 Q50 4 58 12 Q48 24 42 22Z" fill="currentColor" stroke="none"/>
+</svg>

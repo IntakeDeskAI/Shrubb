@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
 
+const inter = Inter({ subsets: ['latin'] });
+
 export const metadata: Metadata = {
-  title: 'LandscapeAI - AI-Powered Landscape Design',
-  description: 'Upload yard photos, generate AI landscape concepts, revise, and export.',
+  title: 'Shrubb - Landscape Design Made Simple',
+  description: 'Find and work with talented landscape designers. Upload photos of your yard and get professional landscape concepts.',
 };
 
 export default function RootLayout({
@@ -13,7 +16,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
+      <body className={`min-h-screen bg-white text-gray-900 antialiased ${inter.className}`}>
         {children}
       </body>
     </html>
