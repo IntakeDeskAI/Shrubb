@@ -20,7 +20,7 @@ export default function LoginPage() {
       redirect('/auth/login?error=' + encodeURIComponent(error.message));
     }
 
-    redirect('/dashboard');
+    redirect('/app');
   }
 
   return (

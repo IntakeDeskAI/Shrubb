@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { ShrubbLogo } from '@/components/shrubb-logo';
 
-export default async function DashboardLayout({
+export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -25,16 +25,16 @@ export default async function DashboardLayout({
       <nav className="border-b bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-8">
-            <ShrubbLogo size="small" color="green" href="/dashboard" />
-            <Link href="/dashboard/projects" className="text-sm text-gray-500 hover:text-gray-900">
+            <ShrubbLogo size="small" color="green" href="/app" />
+            <Link href="/app" className="text-sm text-gray-500 hover:text-gray-900">
               Projects
             </Link>
-            <Link href="/dashboard/billing" className="text-sm text-gray-500 hover:text-gray-900">
-              Billing
+            <Link href="/app/settings" className="text-sm text-gray-500 hover:text-gray-900">
+              Settings
             </Link>
           </div>
           <form action={signOut}>
-            <button type="submit" className="text-sm text-gray-600 hover:text-gray-900">
+            <button type="submit" className="text-sm text-gray-500 hover:text-gray-900">
               Sign Out
             </button>
           </form>

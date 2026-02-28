@@ -1,7 +1,7 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
-const ALLOWED_BUCKETS = ['originals'];
+const ALLOWED_BUCKETS = ['inputs'];
 
 export async function POST(request: Request) {
   const supabase = await createClient();

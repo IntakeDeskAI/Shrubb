@@ -1,34 +1,58 @@
+// ============================================================
+// Job Types for AI Yard Planner
+// ============================================================
+
 export type JobType =
-  | 'generate_brief'
-  | 'generate_concepts'
-  | 'revise_concept'
-  | 'upscale_concept'
-  | 'export_pdf';
+  | 'planner'
+  | 'visualizer'
+  | 'classifier'
+  | 'satellite_fetch'
+  | 'pdf_generation'
+  | 'chat_response';
 
 export type JobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
 
-export interface GenerateBriefPayload {
-  area_id: string;
-  user_constraints?: string;
+export interface PlannerPayload {
+  project_id: string;
+  design_run_id: string;
 }
 
-export interface GenerateConceptsPayload {
-  brief_id: string;
-  area_id: string;
+export interface VisualizerPayload {
+  project_id: string;
+  design_run_id: string;
+  concept_count?: number; // 2-6 depending on tier
 }
 
-export interface ReviseConceptPayload {
-  concept_id: string;
-  revision_prompt: string;
+export interface ClassifierPayload {
+  message_id: string;
+  project_id: string;
+  content: string;
 }
 
-export interface UpscaleConceptPayload {
-  concept_image_id: string;
+export interface SatelliteFetchPayload {
+  project_id: string;
+  address: string;
+  yard_type?: 'front' | 'back';
 }
 
-export interface ExportPdfPayload {
-  concept_ids: string[];
+export interface PdfGenerationPayload {
+  project_id: string;
+  design_run_id: string;
 }
+
+export interface ChatResponsePayload {
+  project_id: string;
+  message_id: string;
+  user_id: string;
+}
+
+export type JobPayload =
+  | PlannerPayload
+  | VisualizerPayload
+  | ClassifierPayload
+  | SatelliteFetchPayload
+  | PdfGenerationPayload
+  | ChatResponsePayload;
 
 export const MAX_JOB_ATTEMPTS = 3;
 export const JOB_LOCK_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes

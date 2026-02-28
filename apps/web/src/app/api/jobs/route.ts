@@ -3,11 +3,12 @@ import { NextResponse } from 'next/server';
 import type { JobType } from '@landscape-ai/shared';
 
 const VALID_JOB_TYPES: JobType[] = [
-  'generate_brief',
-  'generate_concepts',
-  'revise_concept',
-  'upscale_concept',
-  'export_pdf',
+  'planner',
+  'visualizer',
+  'classifier',
+  'satellite_fetch',
+  'pdf_generation',
+  'chat_response',
 ];
 
 export async function POST(request: Request) {
@@ -29,50 +30,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }
 
-  // Enforce plan limits
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('plan')
+  // Check entitlements
+  const { data: entitlements } = await supabase
+    .from('entitlements')
+    .select('*')
     .eq('user_id', user.id)
     .single();
 
-  const plan = subscription?.plan ?? 'free';
-
-  if (plan === 'free') {
-    // Check project limit
-    const { count: projectCount } = await supabase
-      .from('projects')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id);
-
-    if ((projectCount ?? 0) > 1 && type === 'generate_concepts') {
-      return NextResponse.json(
-        { error: 'Free plan limited to 1 project. Upgrade to Pro.' },
-        { status: 403 }
-      );
-    }
-
-    // Block upscale on free plan
-    if (type === 'upscale_concept') {
-      return NextResponse.json(
-        { error: 'Upscaling requires Pro plan.' },
-        { status: 403 }
-      );
-    }
-
-    // Block PDF export on free plan
-    if (type === 'export_pdf') {
-      return NextResponse.json(
-        { error: 'PDF export requires Pro plan.' },
-        { status: 403 }
-      );
-    }
+  if (!entitlements || entitlements.tier === 'none') {
+    return NextResponse.json(
+      { error: 'No active plan. Purchase a plan to continue.' },
+      { status: 403 }
+    );
   }
 
   const { data: job, error } = await supabase
     .from('jobs')
     .insert({
       user_id: user.id,
+      project_id: payload.project_id ?? null,
       type,
       status: 'queued',
       payload,

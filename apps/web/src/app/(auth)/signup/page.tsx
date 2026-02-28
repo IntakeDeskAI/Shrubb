@@ -24,7 +24,7 @@ export default function SignupPage() {
       redirect('/auth/signup?error=' + encodeURIComponent(error.message));
     }
 
-    redirect('/dashboard');
+    redirect('/app');
   }
 
   return (
