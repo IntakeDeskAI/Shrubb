@@ -6,7 +6,7 @@
 export const TIER_CONFIG = {
   starter: {
     label: 'Starter',
-    price_cents: 4900,
+    price_cents: 7900,
     chat_messages: 5,
     rerenders: 0,
     projects: 1,
@@ -22,7 +22,7 @@ export const TIER_CONFIG = {
   },
   standard: {
     label: 'Standard',
-    price_cents: 9900,
+    price_cents: 14900,
     chat_messages: 25,
     rerenders: 1,
     projects: 1,
@@ -40,7 +40,7 @@ export const TIER_CONFIG = {
   },
   premium: {
     label: 'Premium',
-    price_cents: 24900,
+    price_cents: 39900,
     chat_messages: 80,
     rerenders: 2,
     projects: 2,
