@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { ShrubbIcon } from '@/components/shrubb-logo';
 
 /* ───────── check / x icons for pricing ───────── */
 function CheckIcon() {
@@ -24,9 +23,8 @@ export default function HomePage() {
       <header className="absolute top-0 z-50 w-full">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           {/* Logo */}
-          <Link href="/" className="flex items-end gap-0.5 text-white">
-            <span className="text-2xl font-light tracking-wide">shrubb</span>
-            <ShrubbIcon className="mb-1 h-5 w-5" color="#4ade80" />
+          <Link href="/" className="text-2xl font-light tracking-wide text-white">
+            shrubb
           </Link>
 
           {/* Nav links */}
@@ -364,10 +362,7 @@ export default function HomePage() {
 
           <div className="mt-10 border-t border-gray-200 pt-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-end gap-0.5">
-                <span className="text-sm font-light tracking-wide text-gray-900">shrubb</span>
-                <ShrubbIcon className="mb-0.5 h-3.5 w-3.5" color="#15803d" />
-              </div>
+              <span className="text-sm font-light tracking-wide text-gray-900">shrubb</span>
               <p className="text-xs text-gray-400">&copy; {new Date().getFullYear()} Shrubb. All rights reserved.</p>
             </div>
           </div>
