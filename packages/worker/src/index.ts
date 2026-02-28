@@ -1,10 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { MAX_JOB_ATTEMPTS, JOB_LOCK_TIMEOUT_MS } from '@landscape-ai/shared';
-import { handleGenerateBrief } from './handlers/generate-brief.js';
-import { handleGenerateConcepts } from './handlers/generate-concepts.js';
-import { handleReviseConcept } from './handlers/revise-concept.js';
-import { handleUpscaleConcept } from './handlers/upscale-concept.js';
-import { handleExportPdf } from './handlers/export-pdf.js';
+import { handlePlanner } from './handlers/planner.js';
+import { handleVisualizer } from './handlers/visualizer.js';
+import { handleClassifier } from './handlers/classifier.js';
+import { handleSatelliteFetch } from './handlers/satellite-fetch.js';
+import { handlePdfGeneration } from './handlers/pdf-generation.js';
+import { handleChatResponse } from './handlers/chat-response.js';
 
 const POLL_INTERVAL = parseInt(process.env.JOB_POLL_INTERVAL_MS ?? '3000', 10);
 const WORKER_ID = process.env.WORKER_ID ?? `worker-${crypto.randomUUID().slice(0, 8)}`;
@@ -23,11 +24,12 @@ type JobHandler = (
 ) => Promise<Record<string, unknown>>;
 
 const handlers: Record<string, JobHandler> = {
-  generate_brief: handleGenerateBrief,
-  generate_concepts: handleGenerateConcepts,
-  revise_concept: handleReviseConcept,
-  upscale_concept: handleUpscaleConcept,
-  export_pdf: handleExportPdf,
+  planner: handlePlanner,
+  visualizer: handleVisualizer,
+  classifier: handleClassifier,
+  satellite_fetch: handleSatelliteFetch,
+  pdf_generation: handlePdfGeneration,
+  chat_response: handleChatResponse,
 };
 
 interface JobRow {
