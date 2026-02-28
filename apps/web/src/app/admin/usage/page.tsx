@@ -1,0 +1,162 @@
+import { createServiceClient } from '@/lib/supabase/server';
+import Link from 'next/link';
+
+export default async function AdminUsagePage() {
+  const supabase = await createServiceClient();
+
+  // Fetch summary stats and recent entries in parallel
+  const [summaryResult, recentResult] = await Promise.all([
+    supabase
+      .from('usage_ledger')
+      .select('estimated_cost_usd, tokens_in, tokens_out, image_count'),
+    supabase
+      .from('usage_ledger')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50),
+  ]);
+
+  const summaryRows = summaryResult.data ?? [];
+  const recentEntries = recentResult.data ?? [];
+
+  const totalCost = summaryRows.reduce(
+    (sum, row) => sum + Number(row.estimated_cost_usd ?? 0),
+    0,
+  );
+  const totalTokensIn = summaryRows.reduce(
+    (sum, row) => sum + (row.tokens_in ?? 0),
+    0,
+  );
+  const totalTokensOut = summaryRows.reduce(
+    (sum, row) => sum + (row.tokens_out ?? 0),
+    0,
+  );
+  const totalImages = summaryRows.reduce(
+    (sum, row) => sum + (row.image_count ?? 0),
+    0,
+  );
+
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold text-gray-900">Usage Ledger</h1>
+
+      {/* Summary Stats */}
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          <p className="text-sm text-gray-500">Total AI Cost</p>
+          <p className="mt-1 text-2xl font-semibold text-gray-900">
+            ${totalCost.toFixed(2)}
+          </p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          <p className="text-sm text-gray-500">Total Tokens In</p>
+          <p className="mt-1 text-2xl font-semibold text-gray-900">
+            {totalTokensIn.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          <p className="text-sm text-gray-500">Total Tokens Out</p>
+          <p className="mt-1 text-2xl font-semibold text-gray-900">
+            {totalTokensOut.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          <p className="text-sm text-gray-500">Total Images</p>
+          <p className="mt-1 text-2xl font-semibold text-gray-900">
+            {totalImages.toLocaleString()}
+          </p>
+        </div>
+      </div>
+
+      {/* Recent Entries Table */}
+      <div className="mt-8">
+        <h2 className="text-lg font-medium text-gray-900">
+          Recent Entries (Last 50)
+        </h2>
+        <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white">
+          <table className="min-w-full divide-y divide-gray-200 text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  Date
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  User
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  Run Type
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  Tokens In
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  Tokens Out
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  Images
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  Cost
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  Provider
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  Model
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {recentEntries.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={9}
+                    className="px-4 py-8 text-center text-gray-400"
+                  >
+                    No usage entries yet
+                  </td>
+                </tr>
+              )}
+              {recentEntries.map((entry) => (
+                <tr key={entry.id} className="hover:bg-gray-50">
+                  <td className="whitespace-nowrap px-4 py-3 text-gray-500">
+                    {new Date(entry.created_at).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/admin/users/${entry.user_id}`}
+                      className="font-mono text-xs text-brand-600 hover:underline"
+                    >
+                      {entry.user_id.slice(0, 8)}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 font-medium text-gray-700">
+                    {entry.run_type}
+                  </td>
+                  <td className="px-4 py-3 text-gray-700">
+                    {(entry.tokens_in ?? 0).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-gray-700">
+                    {(entry.tokens_out ?? 0).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-gray-700">
+                    {entry.image_count ?? 0}
+                  </td>
+                  <td className="px-4 py-3 text-gray-700">
+                    ${Number(entry.estimated_cost_usd).toFixed(4)}
+                  </td>
+                  <td className="px-4 py-3 text-gray-500">
+                    {entry.provider}
+                  </td>
+                  <td className="px-4 py-3 text-gray-500">
+                    {entry.model ?? '--'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
