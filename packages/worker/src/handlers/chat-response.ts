@@ -2,6 +2,7 @@ import { type SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import { checkSpendingCap, incrementSpending } from '../lib/spending-guard.js';
 import { trackUsage, estimateCost } from '../lib/usage-tracker.js';
+import { sendSms } from '../lib/twilio.js';
 
 const MODEL = 'gpt-4o';
 
@@ -121,6 +122,40 @@ Guidelines:
 
   if (insertErr || !newMsg) {
     throw new Error(`Failed to insert assistant message: ${insertErr?.message}`);
+  }
+
+  // 6b. If the original user message came via SMS, send the reply back via SMS
+  try {
+    const { data: origMessage } = await supabase
+      .from('messages')
+      .select('channel')
+      .eq('id', messageId)
+      .single();
+
+    if (origMessage?.channel === 'sms') {
+      // Look up the user's phone number from their profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('phone')
+        .eq('id', userId)
+        .single();
+
+      if (profile?.phone) {
+        // Keep SMS replies under 1600 characters
+        const smsBody =
+          assistantContent.length > 1600
+            ? assistantContent.slice(0, 1597) + '...'
+            : assistantContent;
+
+        await sendSms({ to: profile.phone, body: smsBody });
+        console.log(`[chat] SMS reply sent to ${profile.phone} for project ${projectId}`);
+      } else {
+        console.warn(`[chat] SMS channel but no phone found for user ${userId}`);
+      }
+    }
+    // 'web' and 'voice' channels require no extra action here
+  } catch (smsError) {
+    console.error('[chat] Failed to send SMS reply:', smsError);
   }
 
   // 7. Track usage
