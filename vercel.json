@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npx turbo run build --filter=@landscape-ai/web",
-  "outputDirectory": "apps/web/.next",
+  "buildCommand": "cd ../.. && npx turbo run build --filter=@landscape-ai/web",
+  "outputDirectory": ".next",
   "framework": "nextjs",
-  "installCommand": "npm install"
+  "installCommand": "cd ../.. && npm install"
 }
