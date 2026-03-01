@@ -135,7 +135,7 @@ export default async function CityLandingPage({
         {/* ================================================================= */}
         {/* LOCAL MARKET SECTION                                              */}
         {/* ================================================================= */}
-        <section className="border-t border-gray-100 bg-gray-50 px-6 py-16">
+        <section className="border-t border-gray-100 bg-gray-50 px-4 py-10 sm:px-6 sm:py-16">
           <div className="mx-auto max-w-5xl">
             <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">
               The {city.city} Landscaping Market
@@ -409,7 +409,7 @@ export default async function CityLandingPage({
         {/* ================================================================= */}
         {/* RELATED CITIES                                                    */}
         {/* ================================================================= */}
-        <section className="border-t border-gray-100 bg-gray-50 px-6 py-16">
+        <section className="border-t border-gray-100 bg-gray-50 px-4 py-10 sm:px-6 sm:py-16">
           <div className="mx-auto max-w-5xl">
             <h2 className="text-center text-2xl font-bold text-gray-900">
               Shrubb for Landscapers in Other Cities
@@ -418,12 +418,12 @@ export default async function CityLandingPage({
               Explore how Shrubb helps landscaping professionals across the
               country.
             </p>
-            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:mt-10 sm:gap-6 lg:grid-cols-4">
               {relatedCities.map((rc) => (
                 <Link
                   key={rc.slug}
                   href={`/landscaping/${rc.slug}`}
-                  className="group rounded-xl border border-gray-200 bg-white p-6 transition hover:border-brand-300 hover:shadow-md"
+                  className="group rounded-xl border border-gray-200 bg-white p-4 transition hover:border-brand-300 hover:shadow-md sm:p-6"
                 >
                   <p className="text-lg font-bold text-gray-900 group-hover:text-brand-600">
                     {rc.city}, {rc.stateCode}
@@ -447,12 +447,12 @@ export default async function CityLandingPage({
       {/* =================================================================== */}
       {/* FOOTER                                                              */}
       {/* =================================================================== */}
-      <footer className="border-t border-gray-100 bg-white px-6 py-10">
+      <footer className="border-t border-gray-100 bg-white px-4 py-6 sm:px-6 sm:py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
-          <span className="text-sm font-light tracking-wide text-gray-900">
+          <span className="text-xs font-light tracking-wide text-gray-900 sm:text-sm">
             shrubb
           </span>
-          <nav className="flex gap-6 text-sm text-gray-400">
+          <nav className="flex flex-wrap justify-center gap-4 text-xs text-gray-400 sm:gap-6 sm:text-sm">
             <Link href="/" className="hover:text-gray-600">
               Home
             </Link>
@@ -466,7 +466,7 @@ export default async function CityLandingPage({
               Sign in
             </Link>
           </nav>
-          <p className="text-xs text-gray-400">
+          <p className="text-[10px] text-gray-400 sm:text-xs">
             &copy; {new Date().getFullYear()} Shrubb. All rights reserved.
           </p>
         </div>
