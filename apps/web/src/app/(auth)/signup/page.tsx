@@ -18,58 +18,51 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     const fullName = formData.get('full_name') as string;
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
-    const supabase = await createClient();
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-      },
-    });
-
-    if (error) {
-      redirect('/signup?error=' + encodeURIComponent(error.message));
-      return;
-    }
-
-    // Supabase returns a fake success (no error) if the email already exists
-    // but doesn't create a session. Check for this case.
-    if (
-      data.user &&
-      (!data.user.identities || data.user.identities.length === 0)
-    ) {
-      redirect(
-        '/signup?error=' +
-          encodeURIComponent(
-            'An account with this email already exists. Please sign in instead.',
-          ),
-      );
-      return;
-    }
-
-    // If no session (email confirmation is on), auto-confirm via admin API and sign in
-    if (!data.session && data.user) {
-      const admin = await createServiceClient();
-      await admin.auth.admin.updateUserById(data.user.id, {
-        email_confirm: true,
-      });
-
-      // Now sign them in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+    // Use admin API to create user — skips confirmation email entirely
+    const admin = await createServiceClient();
+    const { data: created, error: createError } =
+      await admin.auth.admin.createUser({
         email,
         password,
+        email_confirm: true,
+        user_metadata: { full_name: fullName },
       });
 
-      if (signInError) {
+    if (createError) {
+      // Supabase admin returns "A user with this email address has already been registered"
+      const msg = createError.message?.toLowerCase() ?? '';
+      if (msg.includes('already') || msg.includes('exists') || msg.includes('registered')) {
         redirect(
-          '/signup?error=' + encodeURIComponent(signInError.message),
+          '/signup?error=' +
+            encodeURIComponent(
+              'An account with this email already exists. Please sign in instead.',
+            ),
         );
         return;
       }
+      redirect('/signup?error=' + encodeURIComponent(createError.message));
+      return;
     }
 
-    // Success — session is active, go to the app (middleware will route to onboarding)
+    if (!created.user) {
+      redirect('/signup?error=' + encodeURIComponent('Failed to create account. Please try again.'));
+      return;
+    }
+
+    // Sign them in immediately
+    const supabase = await createClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      redirect('/signup?error=' + encodeURIComponent(signInError.message));
+      return;
+    }
+
+    // Success — session is active, middleware will route to onboarding
     redirect('/app');
   }
 
