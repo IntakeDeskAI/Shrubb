@@ -664,30 +664,68 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════ FOOTER ═══════════ */}
-      <footer className="border-t border-gray-100 bg-white px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 sm:flex-row sm:gap-4">
-          <span className="text-sm font-light tracking-wide text-gray-900">shrubb</span>
-          <nav className="flex flex-wrap justify-center gap-4 text-xs text-gray-400 sm:gap-6 sm:text-sm">
-            <a href="#how-it-works" className="hover:text-gray-600">How it works</a>
-            <a href="#pricing" className="hover:text-gray-600">Pricing</a>
-            <a href="#faq" className="hover:text-gray-600">FAQ</a>
-            <Link href="/blog" className="hover:text-gray-600">Blog</Link>
-            <Link href="/compare" className="hover:text-gray-600">Compare</Link>
-            <Link href="/login" className="hover:text-gray-600">Sign in</Link>
-          </nav>
-          <div className="mt-3 flex flex-wrap justify-center gap-3 text-[11px] text-gray-300 sm:mt-2 sm:gap-4 sm:text-xs">
-            <Link href="/landscaping/austin" className="hover:text-gray-500">Austin</Link>
-            <Link href="/landscaping/dallas" className="hover:text-gray-500">Dallas</Link>
-            <Link href="/landscaping/atlanta" className="hover:text-gray-500">Atlanta</Link>
-            <Link href="/landscaping/denver" className="hover:text-gray-500">Denver</Link>
-            <Link href="/landscaping/portland" className="hover:text-gray-500">Portland</Link>
-            <Link href="/landscaping/phoenix" className="hover:text-gray-500">Phoenix</Link>
-            <Link href="/landscaping/tampa" className="hover:text-gray-500">Tampa</Link>
-            <Link href="/landscaping/nashville" className="hover:text-gray-500">Nashville</Link>
-            <Link href="/landscaping/charlotte" className="hover:text-gray-500">Charlotte</Link>
-            <Link href="/landscaping/raleigh" className="hover:text-gray-500">Raleigh</Link>
+      <footer className="border-t border-gray-100 bg-gray-50 px-4 py-10 sm:px-6 sm:py-14">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Brand */}
+            <div>
+              <ShrubbLogo size="default" color="green" />
+              <p className="mt-3 text-sm text-gray-500">
+                AI-powered proposals for landscapers. Stop losing leads. Start closing more jobs.
+              </p>
+              <Link
+                href="/signup"
+                className="mt-4 inline-block rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+              >
+                Start free trial
+              </Link>
+            </div>
+
+            {/* Product */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">Product</h4>
+              <ul className="mt-3 space-y-2 text-sm text-gray-500">
+                <li><a href="#how-it-works" className="transition hover:text-gray-900">How it works</a></li>
+                <li><a href="#pricing" className="transition hover:text-gray-900">Pricing</a></li>
+                <li><a href="#examples" className="transition hover:text-gray-900">Examples</a></li>
+                <li><a href="#faq" className="transition hover:text-gray-900">FAQ</a></li>
+                <li><Link href="/login" className="transition hover:text-gray-900">Sign in</Link></li>
+              </ul>
+            </div>
+
+            {/* Resources */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">Resources</h4>
+              <ul className="mt-3 space-y-2 text-sm text-gray-500">
+                <li><Link href="/blog" className="transition hover:text-gray-900">Blog</Link></li>
+                <li><Link href="/compare" className="transition hover:text-gray-900">Compare tools</Link></li>
+                <li><Link href="/compare/shrubb-vs-copilot" className="transition hover:text-gray-900">Shrubb vs Copilot</Link></li>
+                <li><Link href="/compare/shrubb-vs-canva" className="transition hover:text-gray-900">Shrubb vs Canva</Link></li>
+                <li><Link href="/compare/shrubb-vs-manual-proposals" className="transition hover:text-gray-900">Shrubb vs Manual</Link></li>
+              </ul>
+            </div>
+
+            {/* Cities */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">Landscaping by City</h4>
+              <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-500">
+                <li><Link href="/landscaping/austin" className="transition hover:text-gray-900">Austin</Link></li>
+                <li><Link href="/landscaping/dallas" className="transition hover:text-gray-900">Dallas</Link></li>
+                <li><Link href="/landscaping/atlanta" className="transition hover:text-gray-900">Atlanta</Link></li>
+                <li><Link href="/landscaping/denver" className="transition hover:text-gray-900">Denver</Link></li>
+                <li><Link href="/landscaping/portland" className="transition hover:text-gray-900">Portland</Link></li>
+                <li><Link href="/landscaping/phoenix" className="transition hover:text-gray-900">Phoenix</Link></li>
+                <li><Link href="/landscaping/tampa" className="transition hover:text-gray-900">Tampa</Link></li>
+                <li><Link href="/landscaping/nashville" className="transition hover:text-gray-900">Nashville</Link></li>
+                <li><Link href="/landscaping/charlotte" className="transition hover:text-gray-900">Charlotte</Link></li>
+                <li><Link href="/landscaping/raleigh" className="transition hover:text-gray-900">Raleigh</Link></li>
+              </ul>
+            </div>
           </div>
-          <p className="text-[11px] text-gray-400 sm:text-xs">&copy; {new Date().getFullYear()} Shrubb. All rights reserved.</p>
+
+          <div className="mt-10 border-t border-gray-200 pt-6 text-center text-xs text-gray-400">
+            &copy; {new Date().getFullYear()} Shrubb. All rights reserved.
+          </div>
         </div>
       </footer>
     </div>
