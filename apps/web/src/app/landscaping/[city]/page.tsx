@@ -56,17 +56,18 @@ export default async function CityLandingPage({
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <ShrubbLogo size="default" color="green" />
           <nav className="flex items-center gap-6 text-sm text-gray-500">
-            <Link href="/" className="transition hover:text-gray-900">
+            <Link href="/" className="hidden transition hover:text-gray-900 sm:flex">
               Home
             </Link>
-            <Link href="/blog" className="transition hover:text-gray-900">
+            <Link href="/blog" className="hidden transition hover:text-gray-900 sm:flex">
               Blog
             </Link>
             <Link
               href="/signup"
               className="rounded-lg bg-brand-500 px-5 py-2 font-semibold text-white shadow-sm transition hover:bg-brand-600"
             >
-              Start free trial
+              <span className="sm:hidden">Try free</span>
+              <span className="hidden sm:inline">Start landscaper trial</span>
             </Link>
           </nav>
         </div>
@@ -89,20 +90,20 @@ export default async function CityLandingPage({
         {/* ================================================================= */}
         {/* HERO                                                              */}
         {/* ================================================================= */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-brand-50 via-white to-white px-6 pt-12 pb-20">
+        <section className="relative overflow-hidden bg-gradient-to-b from-brand-50 via-white to-white px-4 pt-20 pb-8 sm:px-6 sm:pt-12 sm:pb-20">
           <div className="pointer-events-none absolute top-0 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-brand-100/40 blur-3xl" />
           <div className="relative z-10 mx-auto max-w-3xl text-center">
             <span className="inline-block rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-semibold text-brand-700">
               USDA Zone {city.usdaZone} &middot; {city.city},{" "}
               {city.stateCode}
             </span>
-            <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+            <h1 className="mt-6 text-[26px] font-extrabold tracking-tight text-gray-900 sm:text-5xl">
               AI Proposals for Landscapers in{" "}
               <span className="text-brand-600">
                 {city.city}, {city.stateCode}
               </span>
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
+            <p className="mx-auto mt-6 max-w-2xl text-[14px] leading-relaxed text-gray-700 sm:text-lg">
               With a population of {city.population} and a landscaping season
               that runs {city.landscapingSeasonDesc}, {city.city} is a
               thriving market for landscaping professionals. Shrubb helps you
@@ -110,6 +111,9 @@ export default async function CityLandingPage({
               Zone {city.usdaZone} — complete with photorealistic renders,
               zone-accurate plant lists, and one-click client acceptance.
             </p>
+            <div className="mx-auto mt-6 max-w-xl rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-left text-[13px] text-brand-800 sm:text-sm">
+              <span className="font-bold">Pro tip:</span> Mention the client&apos;s USDA zone in your proposal — it builds instant credibility.
+            </div>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
                 href="/signup"
@@ -140,9 +144,9 @@ export default async function CityLandingPage({
               {city.marketInsight}
             </p>
 
-            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
               {/* USDA Zone */}
-              <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 text-center sm:p-6">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
                   <LeafIcon className="h-6 w-6 text-brand-600" />
                 </div>
@@ -155,7 +159,7 @@ export default async function CityLandingPage({
               </div>
 
               {/* Season */}
-              <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 text-center sm:p-6">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
                   <CalendarIcon className="h-6 w-6 text-brand-600" />
                 </div>
@@ -168,7 +172,7 @@ export default async function CityLandingPage({
               </div>
 
               {/* Average project size */}
-              <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 text-center sm:p-6">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
                   <DollarIcon className="h-6 w-6 text-brand-600" />
                 </div>
@@ -181,7 +185,7 @@ export default async function CityLandingPage({
               </div>
 
               {/* Population */}
-              <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 text-center sm:p-6">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
                   <UsersIcon className="h-6 w-6 text-brand-600" />
                 </div>
@@ -216,7 +220,7 @@ export default async function CityLandingPage({
         {/* ================================================================= */}
         {/* TOP PLANTS                                                        */}
         {/* ================================================================= */}
-        <section className="px-6 py-16">
+        <section className="px-4 py-10 sm:px-6 sm:py-16">
           <div className="mx-auto max-w-5xl">
             <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">
               Top Plants for Zone {city.usdaZone} in {city.city}
@@ -226,7 +230,7 @@ export default async function CityLandingPage({
               appropriate species in every proposal. Here are some of the most
               popular plants {city.city} landscapers include in their projects.
             </p>
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid gap-3 sm:mt-10 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {city.topPlants.map((plant, i) => {
                 const [commonName, scientificName] = plant.includes("(")
                   ? [
@@ -238,7 +242,7 @@ export default async function CityLandingPage({
                 return (
                   <div
                     key={plant}
-                    className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 transition hover:shadow-md"
+                    className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 transition hover:shadow-md sm:gap-4 sm:p-5"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-sm font-bold text-brand-600">
                       {i + 1}
@@ -257,7 +261,7 @@ export default async function CityLandingPage({
                 );
               })}
               {/* Bonus card — Shrubb pitch */}
-              <div className="flex items-start gap-4 rounded-xl border border-brand-200 bg-brand-50 p-5">
+              <div className="flex items-start gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4 sm:gap-4 sm:p-5">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-sm font-bold text-brand-700">
                   +
                 </div>

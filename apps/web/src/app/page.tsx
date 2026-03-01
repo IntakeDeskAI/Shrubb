@@ -26,9 +26,10 @@ export default function HomePage() {
       <OrganizationSchema />
       <SoftwareApplicationSchema />
       <FaqPageSchema items={HOME_FAQ_ITEMS} />
+
       {/* ═══════════ NAV ═══════════ */}
       <header className="fixed top-0 z-50 w-full border-b border-gray-100 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
           <ShrubbLogo size="default" color="green" />
           <nav className="hidden items-center gap-8 text-sm text-gray-500 sm:flex">
             <a href="#how-it-works" className="transition hover:text-gray-900">How it works</a>
@@ -38,68 +39,70 @@ export default function HomePage() {
             <Link href="/login" className="text-gray-700 hover:text-gray-900">Sign in</Link>
             <Link
               href="/signup"
-              className="rounded-lg bg-brand-500 px-5 py-2 font-semibold text-white shadow-sm transition hover:bg-brand-600"
+              className="rounded-lg bg-brand-600 px-5 py-2 font-semibold text-white shadow-sm transition hover:bg-brand-700"
             >
               Start landscaper trial
             </Link>
           </nav>
           <Link
             href="/signup"
-            className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white sm:hidden"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white sm:hidden"
           >
-            Start landscaper trial
+            Try free
           </Link>
         </div>
       </header>
 
-      {/* ═══════════ HERO ═══════════ */}
-      <section className="relative flex min-h-[580px] items-center justify-center overflow-hidden bg-gradient-to-b from-brand-50 via-white to-white px-6 pt-28 pb-20">
-        <div className="pointer-events-none absolute top-0 left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-brand-100/40 blur-3xl" />
-        <div className="relative z-10 mx-auto max-w-3xl text-center">
-          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+      {/* ═══════════ HERO ═══════════
+        Mobile-first: generous top padding to clear nav + safe area.
+        Tight vertical rhythm — no dead space.
+        One dominant CTA. Secondary demoted to text link.
+      ═══════════ */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-brand-50 to-white px-5 pt-28 pb-10 sm:px-6 sm:pt-32 sm:pb-16 lg:pt-36 lg:pb-20">
+        <div className="pointer-events-none absolute top-0 left-1/2 h-[320px] w-[480px] -translate-x-1/2 rounded-full bg-brand-100/50 blur-3xl sm:h-[500px] sm:w-[800px]" />
+        <div className="relative z-10 mx-auto max-w-2xl text-center lg:max-w-3xl">
+          <h1 className="text-[28px] font-extrabold leading-[1.15] tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
             AI proposals for landscapers that{' '}
             <span className="text-brand-600">close more jobs.</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
-            Built for landscaping and design&nbsp;build teams. Upload a client&apos;s yard photo or
-            address and generate a branded proposal with renders, plant list, and an accept button
-            in minutes.
+          <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-gray-700 sm:mt-5 sm:max-w-2xl sm:text-lg">
+            Built for landscaping and design&nbsp;build teams. Upload a client&apos;s yard photo,
+            generate a branded proposal with renders, plant list, and accept button — in minutes.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600"
-            >
-              Start landscaper trial
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Link>
-            <a
-              href="#examples"
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-8 py-4 text-base font-semibold text-gray-700 transition hover:bg-gray-50"
-            >
-              View a sample client proposal
+
+          {/* Primary CTA — full width on mobile, auto on desktop */}
+          <Link
+            href="/signup"
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-[15px] font-bold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700 sm:mt-8 sm:w-auto sm:px-10 sm:py-4 sm:text-base"
+          >
+            Start landscaper trial — free for 7 days
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </Link>
+
+          {/* Micro trust + secondary link — tight under CTA */}
+          <p className="mt-2.5 text-xs text-gray-400 sm:text-sm">
+            No credit card required &middot; Cancel anytime &middot;{' '}
+            <a href="#examples" className="text-brand-600 underline underline-offset-2 hover:text-brand-700">
+              See a sample proposal
             </a>
-          </div>
-          <p className="mt-4 text-sm text-gray-400">
-            7-day free trial. No credit card required. Cancel anytime.
           </p>
         </div>
       </section>
 
-      {/* ═══════════ IDEAL FOR STRIP ═══════════ */}
-      <section className="border-b border-gray-100 bg-white px-6 py-8">
-        <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-center gap-4">
-          <span className="text-sm font-medium text-gray-400">Ideal for:</span>
+      {/* ═══════════ IDEAL FOR — tight, compact, no dead space ═══════════ */}
+      <section className="border-b border-gray-100 bg-white px-4 py-4 sm:px-6 sm:py-5">
+        <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-center gap-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Ideal for</span>
           {[
-            { icon: '🌿', label: 'Design build landscapers' },
+            { icon: '🌿', label: 'Design-build' },
             { icon: '🧱', label: 'Hardscape & pavers' },
-            { icon: '💧', label: 'Irrigation & lighting crews' },
+            { icon: '💧', label: 'Irrigation & lighting' },
           ].map((chip) => (
             <span
               key={chip.label}
-              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700"
+              className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-xs"
             >
               <span aria-hidden="true">{chip.icon}</span>
               {chip.label}
@@ -108,30 +111,28 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══════════ SOCIAL PROOF STRIP ═══════════ */}
-      <section className="border-y border-gray-100 bg-gray-50 px-6 py-10">
+      {/* ═══════════ SOCIAL PROOF — immediately after hero ═══════════ */}
+      <section className="border-b border-gray-100 bg-gray-50/80 px-4 py-6 sm:px-6 sm:py-10">
         <div className="mx-auto max-w-5xl">
-          <p className="mb-6 text-center text-sm font-medium text-gray-500">
+          <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-400 sm:mb-5 sm:text-xs">
             Trusted by landscaping companies across the US
           </p>
-          {/* Testimonials */}
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-3 sm:gap-5">
             {[
               { quote: 'Closed a $12K backyard remodel after sending the AI proposal. Client said it was the most professional pitch they received.', name: 'Mike T.', location: 'Austin, TX' },
               { quote: 'We used to spend 3 hours per proposal. Now it takes 15 minutes — and the renders blow clients away.', name: 'Sarah L.', location: 'Portland, OR' },
               { quote: 'Shrubb paid for itself on the first job. The plant list and layout plan are exactly what my crew needs to start work.', name: 'Carlos M.', location: 'Denver, CO' },
             ].map((t) => (
-              <div key={t.name} className="rounded-xl border border-gray-100 bg-white p-5">
-                <p className="text-sm italic text-gray-600">&ldquo;{t.quote}&rdquo;</p>
-                <p className="mt-3 text-sm font-semibold text-gray-900">{t.name}</p>
-                <p className="text-xs text-gray-400">{t.location}</p>
+              <div key={t.name} className="rounded-lg border border-gray-100 bg-white p-3.5 sm:rounded-xl sm:p-5">
+                <p className="text-[13px] leading-snug text-gray-700 sm:text-sm sm:leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
+                <p className="mt-2 text-[13px] font-bold text-gray-900 sm:mt-3 sm:text-sm">{t.name}</p>
+                <p className="text-[11px] text-gray-400 sm:text-xs">{t.location}</p>
               </div>
             ))}
           </div>
-          {/* Badges */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            {['Zone-aware plants', 'Branded proposals', 'Client tracking', 'Instant PDF export'].map((badge) => (
-              <span key={badge} className="rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-semibold text-brand-700">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 sm:mt-6 sm:gap-3">
+            {['Zone-aware plants', 'Branded proposals', 'Client tracking', 'PDF export'].map((badge) => (
+              <span key={badge} className="rounded-full border border-brand-200 bg-brand-50 px-2.5 py-0.5 text-[10px] font-bold text-brand-700 sm:px-3.5 sm:py-1 sm:text-xs">
                 {badge}
               </span>
             ))}
@@ -140,35 +141,38 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════ ROI ANCHOR ═══════════ */}
-      <section className="border-b border-gray-100 bg-white px-6 py-16">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-            Close one extra $3,000 job a month &mdash; Shrubb pays for itself.
+      <section className="bg-white px-5 py-10 sm:px-6 sm:py-14">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-xl font-bold text-gray-900 sm:text-3xl">
+            Close one extra $3,000 job a month — Shrubb pays for itself.
           </h2>
-          <p className="mt-3 text-gray-500">
+          <p className="mt-2 text-sm text-gray-500 sm:mt-3">
             Most teams recoup the cost within the first week.
           </p>
         </div>
       </section>
 
       {/* ═══════════ HOW IT WORKS ═══════════ */}
-      <section id="how-it-works" className="px-6 py-24">
+      <section id="how-it-works" className="border-t border-gray-100 px-5 py-12 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-center text-3xl font-bold text-gray-900 sm:text-4xl">How it works</h2>
-          <p className="mt-3 text-center text-gray-500">From client lead to signed proposal in 4 steps.</p>
-          <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-4xl">How it works</h2>
+          <p className="mt-2 text-center text-sm text-gray-500 sm:mt-3">From client lead to signed proposal in 4 steps.</p>
+          <div className="mt-8 grid gap-6 sm:mt-14 sm:grid-cols-2 lg:grid-cols-4 sm:gap-8">
             {[
-              { step: '1', title: 'Add a client & upload their yard', desc: 'Snap a photo of the property or enter an address. Shrubb fetches satellite imagery automatically.' },
-              { step: '2', title: 'Set style, budget & plant preferences', desc: 'Modern? Drought-tolerant? Low maintenance? Customize every detail for your client.' },
-              { step: '3', title: 'AI generates designs — refine in chat', desc: 'Get multiple design concepts with photorealistic renders. Chat to tweak plants, materials, or layout.' },
-              { step: '4', title: 'Send a branded proposal to your client', desc: 'One click sends a hosted proposal page with renders, plant list, and accept button.' },
+              { step: '1', title: 'Add a client & upload their yard', desc: 'Snap a photo of the property or enter an address. Shrubb fetches satellite imagery automatically.', tip: 'Tip: address lookup auto-fetches Google satellite view' },
+              { step: '2', title: 'Set style, budget & plant preferences', desc: 'Modern? Drought-tolerant? Low maintenance? Customize every detail for your client.', tip: 'Tip: save presets for your most common project types' },
+              { step: '3', title: 'AI generates designs — refine in chat', desc: 'Get multiple design concepts with photorealistic renders. Chat to tweak plants, materials, or layout.', tip: 'Tip: ask the AI to swap materials or resize beds' },
+              { step: '4', title: 'Send a branded proposal to your client', desc: 'One click sends a hosted proposal page with renders, plant list, and accept button.', tip: 'Tip: you get notified when your client views or accepts' },
             ].map((s) => (
               <div key={s.step} className="text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-xl font-bold text-brand-600">
+                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-brand-100 text-lg font-bold text-brand-700 sm:h-14 sm:w-14 sm:rounded-2xl sm:text-xl">
                   {s.step}
                 </div>
-                <h3 className="mt-4 text-sm font-bold text-gray-900">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-gray-500">{s.desc}</p>
+                <h3 className="mt-3 text-[13px] font-bold text-gray-900 sm:mt-4 sm:text-sm">{s.title}</h3>
+                <p className="mt-1.5 text-[13px] leading-snug text-gray-500 sm:mt-2 sm:text-sm sm:leading-relaxed">{s.desc}</p>
+                <p className="mt-2 rounded-md bg-brand-50 px-2 py-1 text-[11px] font-medium text-brand-700 sm:mt-3 sm:text-xs">
+                  {s.tip}
+                </p>
               </div>
             ))}
           </div>
@@ -176,43 +180,44 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════ EXAMPLES GALLERY ═══════════ */}
-      <section id="examples" className="border-t border-gray-100 bg-gray-50 px-6 py-24">
+      <section id="examples" className="border-t border-gray-100 bg-gray-50 px-4 py-12 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-4xl">
-          <h2 className="text-center text-3xl font-bold text-gray-900 sm:text-4xl">See the difference</h2>
-          <p className="mt-3 text-center text-gray-500">Before and after &mdash; powered by AI.</p>
-          <div className="mt-12 overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
+          <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-4xl">See the difference</h2>
+          <p className="mt-2 text-center text-sm text-gray-500 sm:mt-3">Before and after — powered by AI.</p>
+          <div className="mt-6 overflow-hidden rounded-xl border border-gray-200 shadow-sm sm:mt-10 sm:rounded-2xl">
             <BeforeAfterSlider />
           </div>
+
           {/* ── Proposal page mockup ── */}
-          <div className="mt-12">
-            <h3 className="text-center text-xl font-semibold text-gray-900">
+          <div className="mt-8 sm:mt-12">
+            <h3 className="text-center text-lg font-bold text-gray-900 sm:text-xl">
               What your client sees
             </h3>
-            <p className="mt-2 text-center text-sm text-gray-500">
+            <p className="mt-1 text-center text-xs text-gray-500 sm:mt-2 sm:text-sm">
               A branded proposal page with renders, plant list, and one-click accept.
             </p>
-            <div className="mx-auto mt-6 max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
-              <div className="bg-brand-600 px-6 py-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-brand-100">Proposal from</p>
-                <p className="text-lg font-bold text-white">Your Landscaping Co.</p>
+            <div className="mx-auto mt-4 max-w-sm overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg sm:mt-6 sm:max-w-md sm:rounded-2xl">
+              <div className="bg-brand-700 px-4 py-3 sm:px-6 sm:py-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-brand-200 sm:text-xs">Proposal from</p>
+                <p className="text-base font-bold text-white sm:text-lg">Your Landscaping Co.</p>
               </div>
-              <div className="space-y-4 px-6 py-6">
-                <div className="aspect-[16/9] rounded-lg bg-gradient-to-br from-brand-100 to-brand-50 flex items-center justify-center">
-                  <span className="text-sm font-medium text-brand-600">Design render preview</span>
+              <div className="space-y-3 px-4 py-4 sm:space-y-4 sm:px-6 sm:py-6">
+                <div className="flex aspect-[16/9] items-center justify-center rounded-lg bg-gradient-to-br from-brand-100 to-brand-50">
+                  <span className="text-xs font-semibold text-brand-600 sm:text-sm">Design render preview</span>
                 </div>
-                <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+                <div className="flex items-center justify-between border-t border-gray-100 pt-3 sm:pt-4">
                   <div>
-                    <p className="text-xs text-gray-400">Estimated total</p>
-                    <p className="text-xl font-bold text-gray-900">$4,250</p>
+                    <p className="text-[10px] font-medium text-gray-400 sm:text-xs">Estimated total</p>
+                    <p className="text-lg font-bold text-gray-900 sm:text-xl">$4,250</p>
                   </div>
-                  <div className="rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-semibold text-white shadow-sm">
+                  <div className="rounded-lg bg-brand-600 px-4 py-2 text-xs font-bold text-white shadow-sm sm:px-6 sm:py-2.5 sm:text-sm">
                     Accept Proposal
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-500">12 plants</span>
-                  <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-500">3 renders</span>
-                  <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-500">PDF included</span>
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                  <span className="rounded bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500 sm:text-xs sm:py-1">12 plants</span>
+                  <span className="rounded bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500 sm:text-xs sm:py-1">3 renders</span>
+                  <span className="rounded bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500 sm:text-xs sm:py-1">PDF included</span>
                 </div>
               </div>
             </div>
@@ -221,45 +226,43 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════ PRICING ═══════════ */}
-      <section id="pricing" className="px-6 py-24">
+      <section id="pricing" className="px-4 py-12 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-center text-3xl font-bold text-gray-900 sm:text-4xl">Simple monthly pricing</h2>
-          <p className="mt-3 text-center text-gray-500">
+          <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-4xl">Simple monthly pricing</h2>
+          <p className="mt-2 text-center text-sm text-gray-500 sm:mt-3">
             Start with a 7-day free trial. Upgrade, downgrade, or cancel anytime.
           </p>
-          <p className="mt-1 text-center text-xs text-gray-400">
+          <p className="mt-1 text-center text-[11px] text-gray-400 sm:text-xs">
             Each proposal uses AI compute. Usage is included per plan, with add-on packs available.
           </p>
-          <div className="mt-12">
+          <div className="mt-8 sm:mt-12">
             <PricingTable />
           </div>
         </div>
       </section>
 
       {/* ═══════════ FAQ ═══════════ */}
-      <section id="faq" className="border-t border-gray-100 bg-gray-50 px-6 py-24">
+      <section id="faq" className="border-t border-gray-100 bg-gray-50 px-4 py-12 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-3xl">
-          <div className="mt-12">
-            <FaqAccordion />
-          </div>
+          <FaqAccordion />
         </div>
       </section>
 
       {/* ═══════════ FINAL CTA ═══════════ */}
-      <section className="px-6 py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+      <section className="px-5 py-12 sm:px-6 sm:py-20">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-2xl font-bold text-gray-900 sm:text-4xl">
             Ready to close more landscaping jobs?
           </h2>
-          <p className="mt-4 text-lg text-gray-500">
+          <p className="mt-3 text-sm text-gray-500 sm:mt-4 sm:text-lg">
             Join landscapers using Shrubb to create stunning proposals and win more clients.
           </p>
           <Link
             href="/signup"
-            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-brand-500 px-10 py-4 text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600"
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-8 py-3.5 text-[15px] font-bold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700 sm:mt-8 sm:w-auto sm:px-10 sm:py-4 sm:text-base"
           >
             Start your landscaper trial
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
           </Link>
@@ -267,16 +270,16 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════ FOOTER ═══════════ */}
-      <footer className="border-t border-gray-100 bg-white px-6 py-10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
+      <footer className="border-t border-gray-100 bg-white px-4 py-8 sm:px-6 sm:py-10">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 sm:flex-row sm:gap-4">
           <span className="text-sm font-light tracking-wide text-gray-900">shrubb</span>
-          <nav className="flex gap-6 text-sm text-gray-400">
+          <nav className="flex flex-wrap justify-center gap-4 text-xs text-gray-400 sm:gap-6 sm:text-sm">
             <a href="#how-it-works" className="hover:text-gray-600">How it works</a>
             <a href="#pricing" className="hover:text-gray-600">Pricing</a>
             <a href="#faq" className="hover:text-gray-600">FAQ</a>
             <Link href="/login" className="hover:text-gray-600">Sign in</Link>
           </nav>
-          <p className="text-xs text-gray-400">&copy; {new Date().getFullYear()} Shrubb. All rights reserved.</p>
+          <p className="text-[11px] text-gray-400 sm:text-xs">&copy; {new Date().getFullYear()} Shrubb. All rights reserved.</p>
         </div>
       </footer>
     </div>

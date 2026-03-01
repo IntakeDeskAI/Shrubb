@@ -52,14 +52,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               href="/signup"
               className="rounded-lg bg-brand-500 px-4 py-2 font-semibold text-white transition hover:bg-brand-600"
             >
-              Start free trial
+              Start landscaper trial
             </Link>
           </nav>
         </div>
       </header>
 
       {/* ── Article ── */}
-      <article className="px-6 py-12">
+      <article className="px-4 sm:px-6 py-8 sm:py-12">
         <div className="mx-auto max-w-3xl">
           {/* Back link */}
           <Link
@@ -84,7 +84,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </span>
 
           {/* Title */}
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+          <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
             {post.title}
           </h1>
 
@@ -103,11 +103,17 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             <span>{post.readTime}</span>
           </div>
 
+          {/* Landscaper tip */}
+          <div className="mt-4 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 sm:mt-6">
+            <p className="text-xs font-bold text-brand-700 sm:text-sm">Quick tip for landscapers</p>
+            <p className="mt-1 text-xs text-brand-600 sm:text-sm">Bookmark this guide and share it with your sales team — better proposals mean more closed jobs.</p>
+          </div>
+
           {/* Content */}
           <div
             className="mt-10
               [&>h2]:mt-10 [&>h2]:mb-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:text-gray-900 sm:[&>h2]:text-2xl
-              [&>p]:mb-4 [&>p]:leading-relaxed [&>p]:text-gray-600
+              [&>p]:mb-4 [&>p]:text-[14px] [&>p]:leading-relaxed [&>p]:text-gray-600 sm:[&>p]:text-base
               [&>ul]:mb-6 [&>ul]:ml-6 [&>ul]:list-disc [&>ul]:space-y-2 [&>ul]:text-gray-600
               [&>ul>li]:leading-relaxed
               [&_a]:text-brand-600 [&_a]:underline hover:[&_a]:text-brand-700
@@ -116,8 +122,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           />
 
           {/* ── CTA Box ── */}
-          <div className="mt-14 rounded-2xl border border-brand-200 bg-brand-50 px-8 py-10 text-center">
-            <h2 className="text-2xl font-bold text-gray-900">
+          <div className="mt-14 rounded-2xl border border-brand-200 bg-brand-50 px-5 py-6 sm:px-8 sm:py-10 text-center">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
               Ready to send better proposals?
             </h2>
             <p className="mx-auto mt-3 max-w-md text-gray-600">
@@ -128,7 +134,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               href="/signup"
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-500 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600"
             >
-              Start your free trial
+              Start your landscaper trial
               <svg
                 className="h-4 w-4"
                 fill="none"

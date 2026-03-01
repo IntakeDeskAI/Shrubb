@@ -129,10 +129,10 @@ export default async function ComparisonPage({
       </div>
 
       {/* ═══════════ HERO ═══════════ */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-brand-50 via-white to-white px-6 pt-8 pb-16">
+      <section className="relative overflow-hidden bg-gradient-to-b from-brand-50 via-white to-white px-6 pt-6 pb-10 sm:pt-8 sm:pb-16">
         <div className="pointer-events-none absolute top-0 left-1/2 h-[400px] w-[700px] -translate-x-1/2 rounded-full bg-brand-100/40 blur-3xl" />
         <div className="relative z-10 mx-auto max-w-3xl text-center">
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+          <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
             {comparison.title}
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-gray-600">
@@ -191,7 +191,7 @@ export default async function ComparisonPage({
             {comparison.features.map((f) => (
               <div
                 key={f.feature}
-                className="rounded-xl border border-gray-200 p-4"
+                className="rounded-xl border border-gray-200 p-3 sm:p-4"
               >
                 <p className="mb-3 text-sm font-bold text-gray-900">
                   {f.feature}
@@ -227,7 +227,7 @@ export default async function ComparisonPage({
             {comparison.shrubWins.map((win) => (
               <div
                 key={win}
-                className="flex items-start gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm"
+                className="flex items-start gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-100">
                   <CheckIcon />
@@ -245,9 +245,12 @@ export default async function ComparisonPage({
           <h2 className="mb-6 text-center text-2xl font-bold text-gray-900 sm:text-3xl">
             The Verdict
           </h2>
-          <div className="rounded-xl border border-brand-200 bg-brand-50 p-8">
+          <div className="rounded-xl border border-brand-200 bg-brand-50 p-5 sm:p-8">
             <p className="text-center text-base leading-relaxed text-gray-700">
               {comparison.verdict}
+            </p>
+            <p className="mt-4 text-center text-xs font-medium text-brand-700 sm:text-sm">
+              How to switch: Sign up for a free 7-day trial, import your client list, and send your first AI proposal in under 15 minutes.
             </p>
           </div>
         </div>
@@ -264,7 +267,7 @@ export default async function ComparisonPage({
           </p>
           <Link
             href="/signup"
-            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-brand-500 px-10 py-4 text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600"
+            className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-10 py-4 text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600 sm:w-auto"
           >
             Try Shrubb free
             <ArrowRightIcon />
@@ -282,7 +285,7 @@ export default async function ComparisonPage({
             <h2 className="mb-8 text-center text-2xl font-bold text-gray-900">
               Other Comparisons
             </h2>
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-4 sm:gap-6 sm:grid-cols-2">
               {otherComparisons.map((c) => (
                 <Link
                   key={c.slug}
@@ -310,7 +313,7 @@ export default async function ComparisonPage({
           <span className="text-sm font-light tracking-wide text-gray-900">
             shrubb
           </span>
-          <nav className="flex gap-6 text-sm text-gray-400">
+          <nav className="flex flex-wrap justify-center gap-6 text-xs text-gray-400 sm:text-sm">
             <Link href="/" className="hover:text-gray-600">
               Home
             </Link>
