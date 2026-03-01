@@ -5,8 +5,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Shrubb - Landscape Design Made Simple',
-  description: 'Find and work with talented landscape designers. Upload photos of your yard and get professional landscape concepts.',
+  title: 'Shrubb | AI Proposals for Landscapers',
+  description: 'AI-powered proposals for landscaping companies. Upload a client yard photo, generate branded proposals with renders, plant lists, and accept buttons in minutes.',
   icons: {
     icon: '/favicon.png',
     apple: '/apple-touch-icon.png',

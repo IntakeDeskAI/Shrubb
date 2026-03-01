@@ -21,8 +21,9 @@ export function ShrubbLogo({
   };
 
   return (
-    <Link href={href} className={`${textSizes[size]} font-light tracking-wide ${textColor}`}>
-      shrubb
+    <Link href={href} className="flex flex-col leading-tight">
+      <span className={`${textSizes[size]} font-light tracking-wide ${textColor}`}>shrubb</span>
+      <span className="text-[10px] font-medium tracking-wide text-gray-400">AI Proposals for Landscapers</span>
     </Link>
   );
 }
