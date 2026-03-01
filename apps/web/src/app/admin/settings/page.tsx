@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface AiProviderConfig {
   provider: 'openai' | 'anthropic';
@@ -52,9 +52,49 @@ export default function AiSettingsPage() {
   const [configs, setConfigs] = useState<AiProviderConfig[]>(DEFAULT_CONFIGS);
   const [commConfigs, setCommConfigs] = useState<CommProviderConfig[]>(DEFAULT_COMM_CONFIGS);
   const [activeProvider, setActiveProvider] = useState<'openai' | 'anthropic'>('openai');
+  const [googleMapsKey, setGoogleMapsKey] = useState('');
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<string | null>(null);
+  const [connected, setConnected] = useState<Record<string, boolean>>({});
+
+  // Load saved settings on mount
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/admin/ai-settings');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.configs) setConfigs(data.configs);
+        if (data.activeProvider) setActiveProvider(data.activeProvider);
+        if (data.commConfigs) setCommConfigs(data.commConfigs);
+        if (data.googleMapsKey) setGoogleMapsKey(data.googleMapsKey);
+
+        // Mark providers with saved keys as connected
+        const connState: Record<string, boolean> = {};
+        if (data.configs) {
+          for (const c of data.configs) {
+            if (c.apiKey && c.enabled) connState[c.provider] = true;
+          }
+        }
+        if (data.commConfigs) {
+          for (const c of data.commConfigs) {
+            if (c.enabled && Object.values(c.fields).some((v) => typeof v === 'string' && v.length > 0)) {
+              connState[c.provider] = true;
+            }
+          }
+        }
+        if (data.googleMapsKey) connState['google-maps'] = true;
+        setConnected(connState);
+      } catch {
+        // First load, no settings yet
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   function updateConfig(provider: string, updates: Partial<AiProviderConfig>) {
     setConfigs((prev) =>
@@ -80,16 +120,32 @@ export default function AiSettingsPage() {
 
   async function handleSave() {
     setSaving(true);
+    setTestResult(null);
     try {
       const res = await fetch('/api/admin/ai-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ configs, activeProvider, commConfigs }),
+        body: JSON.stringify({ configs, activeProvider, commConfigs, googleMapsKey }),
       });
-      if (!res.ok) throw new Error('Failed to save');
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to save');
+      }
       setTestResult('Settings saved successfully.');
-    } catch {
-      setTestResult('Error saving settings. Check console.');
+
+      const connState: Record<string, boolean> = {};
+      for (const c of configs) {
+        if (c.apiKey && c.enabled) connState[c.provider] = true;
+      }
+      for (const c of commConfigs) {
+        if (c.enabled && Object.values(c.fields).some((v) => v.length > 0)) {
+          connState[c.provider] = true;
+        }
+      }
+      if (googleMapsKey) connState['google-maps'] = true;
+      setConnected(connState);
+    } catch (err) {
+      setTestResult(`Error saving: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
     }
@@ -111,20 +167,40 @@ export default function AiSettingsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Test failed');
-      setTestResult(`${provider} connection successful: "${data.message}"`);
+      setTestResult(`${provider} connection successful!`);
+      setConnected((prev) => ({ ...prev, [provider]: true }));
     } catch (err) {
       setTestResult(`${provider} test failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setConnected((prev) => ({ ...prev, [provider]: false }));
     } finally {
       setTesting(null);
     }
+  }
+
+  function ConnectedBadge({ provider }: { provider: string }) {
+    if (!connected[provider]) return null;
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+        <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+        Connected
+      </span>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-brand-500" />
+        <span className="ml-3 text-sm text-gray-500">Loading settings...</span>
+      </div>
+    );
   }
 
   return (
     <div>
       <h1 className="text-2xl font-semibold text-gray-900">AI Provider Settings</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Configure OpenAI and Anthropic API keys for automated content generation. Content can be
-        generated for blog posts, GEO pages, and comparison pages.
+        Configure API keys for AI, communication, and third-party services. Settings are persisted automatically.
       </p>
 
       {/* Active provider selector */}
@@ -158,9 +234,12 @@ export default function AiSettingsPage() {
             }`}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {config.provider === 'openai' ? 'OpenAI' : 'Anthropic (Claude)'}
-              </h3>
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {config.provider === 'openai' ? 'OpenAI' : 'Anthropic (Claude)'}
+                </h3>
+                <ConnectedBadge provider={config.provider} />
+              </div>
               <label className="flex items-center gap-2 text-sm text-gray-600">
                 <input
                   type="checkbox"
@@ -191,9 +270,7 @@ export default function AiSettingsPage() {
                   className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                 >
                   {AVAILABLE_MODELS[config.provider].map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
+                    <option key={m} value={m}>{m}</option>
                   ))}
                 </select>
               </div>
@@ -212,7 +289,7 @@ export default function AiSettingsPage() {
         ))}
       </div>
 
-      {/* Test result */}
+      {/* Test / save result */}
       {testResult && (
         <div className={`mt-4 rounded-lg border p-4 text-sm ${
           testResult.includes('success') || testResult.includes('saved')
@@ -231,153 +308,86 @@ export default function AiSettingsPage() {
         </p>
 
         <div className="mt-6 space-y-6">
-          {/* ── Bland.ai ── */}
+          {/* Bland.ai */}
           {(() => {
             const bland = commConfigs.find((c) => c.provider === 'bland')!;
             return (
               <div className={`rounded-lg border bg-white p-6 ${bland.enabled ? 'border-brand-200' : 'border-gray-200'}`}>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Bland.ai</h3>
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-semibold text-gray-900">Bland.ai</h3>
+                    <ConnectedBadge provider="bland" />
+                  </div>
                   <label className="flex items-center gap-2 text-sm text-gray-600">
-                    <input
-                      type="checkbox"
-                      checked={bland.enabled}
-                      onChange={(e) => toggleCommProvider('bland', e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
-                    />
+                    <input type="checkbox" checked={bland.enabled} onChange={(e) => toggleCommProvider('bland', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500" />
                     Enabled
                   </label>
                 </div>
-
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">API Key</label>
-                    <input
-                      type="password"
-                      value={bland.fields.apiKey}
-                      onChange={(e) => updateCommConfig('bland', 'apiKey', e.target.value)}
-                      placeholder="bland-..."
-                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
+                    <input type="password" value={bland.fields.apiKey} onChange={(e) => updateCommConfig('bland', 'apiKey', e.target.value)} placeholder="bland-..." className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Webhook Secret</label>
-                    <input
-                      type="password"
-                      value={bland.fields.webhookSecret}
-                      onChange={(e) => updateCommConfig('bland', 'webhookSecret', e.target.value)}
-                      placeholder="whsec_..."
-                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
+                    <input type="password" value={bland.fields.webhookSecret} onChange={(e) => updateCommConfig('bland', 'webhookSecret', e.target.value)} placeholder="whsec_..." className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
                   </div>
                 </div>
-
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700">Webhook URL</label>
                   <div className="mt-1 flex items-center gap-2">
-                    <code className="block flex-1 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-600">
-                      {WEBHOOK_URLS.bland}
-                    </code>
-                    <button
-                      type="button"
-                      onClick={() => navigator.clipboard.writeText(WEBHOOK_URLS.bland)}
-                      className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
-                    >
-                      Copy
-                    </button>
+                    <code className="block flex-1 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-600">{WEBHOOK_URLS.bland}</code>
+                    <button type="button" onClick={() => navigator.clipboard.writeText(WEBHOOK_URLS.bland)} className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50">Copy</button>
                   </div>
-                  <p className="mt-1 text-xs text-gray-400">Add this URL in your Bland.ai dashboard under webhook settings.</p>
                 </div>
               </div>
             );
           })()}
 
-          {/* ── Twilio ── */}
+          {/* Twilio */}
           {(() => {
             const twilio = commConfigs.find((c) => c.provider === 'twilio')!;
             return (
               <div className={`rounded-lg border bg-white p-6 ${twilio.enabled ? 'border-brand-200' : 'border-gray-200'}`}>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Twilio</h3>
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-semibold text-gray-900">Twilio</h3>
+                    <ConnectedBadge provider="twilio" />
+                  </div>
                   <label className="flex items-center gap-2 text-sm text-gray-600">
-                    <input
-                      type="checkbox"
-                      checked={twilio.enabled}
-                      onChange={(e) => toggleCommProvider('twilio', e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
-                    />
+                    <input type="checkbox" checked={twilio.enabled} onChange={(e) => toggleCommProvider('twilio', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500" />
                     Enabled
                   </label>
                 </div>
-
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Account SID</label>
-                    <input
-                      type="text"
-                      value={twilio.fields.accountSid}
-                      onChange={(e) => updateCommConfig('twilio', 'accountSid', e.target.value)}
-                      placeholder="AC..."
-                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
+                    <input type="text" value={twilio.fields.accountSid} onChange={(e) => updateCommConfig('twilio', 'accountSid', e.target.value)} placeholder="AC..." className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Auth Token</label>
-                    <input
-                      type="password"
-                      value={twilio.fields.authToken}
-                      onChange={(e) => updateCommConfig('twilio', 'authToken', e.target.value)}
-                      placeholder="Auth token..."
-                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
+                    <input type="password" value={twilio.fields.authToken} onChange={(e) => updateCommConfig('twilio', 'authToken', e.target.value)} placeholder="Auth token..." className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Webhook Secret</label>
-                    <input
-                      type="password"
-                      value={twilio.fields.webhookSecret}
-                      onChange={(e) => updateCommConfig('twilio', 'webhookSecret', e.target.value)}
-                      placeholder="Token for webhook verification..."
-                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
+                    <input type="password" value={twilio.fields.webhookSecret} onChange={(e) => updateCommConfig('twilio', 'webhookSecret', e.target.value)} placeholder="Token for webhook verification..." className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-                    <input
-                      type="text"
-                      value={twilio.fields.phoneNumber}
-                      onChange={(e) => updateCommConfig('twilio', 'phoneNumber', e.target.value)}
-                      placeholder="+1 (555) 123-4567"
-                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
+                    <input type="text" value={twilio.fields.phoneNumber} onChange={(e) => updateCommConfig('twilio', 'phoneNumber', e.target.value)} placeholder="+1 (555) 123-4567" className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
                   </div>
                 </div>
-
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700">Webhook URLs</label>
                   <div className="mt-2 space-y-2">
-                    {([
-                      ['SMS', WEBHOOK_URLS.twilio.sms],
-                      ['SMS (Advanced)', WEBHOOK_URLS.twilio.smsAdvanced],
-                      ['Voice', WEBHOOK_URLS.twilio.voice],
-                      ['Voice Status', WEBHOOK_URLS.twilio.voiceStatus],
-                    ] as const).map(([label, url]) => (
+                    {([['SMS', WEBHOOK_URLS.twilio.sms], ['SMS (Advanced)', WEBHOOK_URLS.twilio.smsAdvanced], ['Voice', WEBHOOK_URLS.twilio.voice], ['Voice Status', WEBHOOK_URLS.twilio.voiceStatus]] as const).map(([label, url]) => (
                       <div key={label} className="flex items-center gap-2">
                         <span className="w-28 shrink-0 text-xs font-medium text-gray-500">{label}</span>
-                        <code className="block flex-1 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs text-gray-600">
-                          {url}
-                        </code>
-                        <button
-                          type="button"
-                          onClick={() => navigator.clipboard.writeText(url)}
-                          className="rounded border border-gray-200 px-2 py-1 text-[10px] font-medium text-gray-500 hover:bg-gray-50"
-                        >
-                          Copy
-                        </button>
+                        <code className="block flex-1 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs text-gray-600">{url}</code>
+                        <button type="button" onClick={() => navigator.clipboard.writeText(url)} className="rounded border border-gray-200 px-2 py-1 text-[10px] font-medium text-gray-500 hover:bg-gray-50">Copy</button>
                       </div>
                     ))}
                   </div>
-                  <p className="mt-2 text-xs text-gray-400">Add these URLs in your Twilio phone number configuration.</p>
                 </div>
               </div>
             );
@@ -388,46 +398,42 @@ export default function AiSettingsPage() {
       {/* ═══════════ THIRD-PARTY API KEYS ═══════════ */}
       <div className="mt-10">
         <h2 className="text-lg font-semibold text-gray-900">Third-Party API Keys</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Keys for external services used across the app.
-        </p>
+        <p className="mt-1 text-sm text-gray-500">Keys for external services used across the app.</p>
         <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
-          <h3 className="text-base font-semibold text-gray-900">Google Maps / Places</h3>
+          <div className="flex items-center gap-3">
+            <h3 className="text-base font-semibold text-gray-900">Google Maps / Places</h3>
+            <ConnectedBadge provider="google-maps" />
+          </div>
           <p className="mt-1 text-xs text-gray-500">Used for address autocomplete on client and project forms.</p>
           <div className="mt-3">
             <label className="block text-sm font-medium text-gray-700">API Key</label>
             <input
               type="password"
+              value={googleMapsKey}
+              onChange={(e) => setGoogleMapsKey(e.target.value)}
               placeholder="AIza..."
               className="mt-1 w-full max-w-md rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
             <p className="mt-1 text-xs text-gray-400">
-              Set as <code className="rounded bg-gray-100 px-1 py-0.5 text-[11px]">NEXT_PUBLIC_GOOGLE_PLACES_API_KEY</code> in your environment variables.
-              Enable the <strong>Places API (New)</strong> in Google Cloud Console.
+              Also set as <code className="rounded bg-gray-100 px-1 py-0.5 text-[11px]">NEXT_PUBLIC_GOOGLE_PLACES_API_KEY</code> in your environment variables.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Content generation config */}
+      {/* Content generation templates */}
       <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6">
         <h3 className="text-lg font-semibold text-gray-900">Content Generation Templates</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          System prompts used when generating content with the active AI provider.
-        </p>
+        <p className="mt-1 text-sm text-gray-500">System prompts used when generating content with the active AI provider.</p>
         <div className="mt-4 space-y-4">
           {[
-            { label: 'Blog Post System Prompt', placeholder: 'You are an expert content writer for the landscaping industry. Write SEO-optimized blog posts that are genuinely useful for landscaping business owners...' },
-            { label: 'GEO Page System Prompt', placeholder: 'You are a local SEO specialist for landscaping companies. Generate city-specific landing page content with accurate USDA zone data, local plant recommendations...' },
-            { label: 'Comparison Page System Prompt', placeholder: 'You are a product marketing writer for Shrubb, an AI proposal tool for landscapers. Write fair, honest comparison pages that highlight Shrubb advantages...' },
+            { label: 'Blog Post System Prompt', placeholder: 'You are an expert content writer for the landscaping industry...' },
+            { label: 'GEO Page System Prompt', placeholder: 'You are a local SEO specialist for landscaping companies...' },
+            { label: 'Comparison Page System Prompt', placeholder: 'You are a product marketing writer for Shrubb...' },
           ].map((tmpl) => (
             <div key={tmpl.label}>
               <label className="block text-sm font-medium text-gray-700">{tmpl.label}</label>
-              <textarea
-                rows={3}
-                placeholder={tmpl.placeholder}
-                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              />
+              <textarea rows={3} placeholder={tmpl.placeholder} className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
             </div>
           ))}
         </div>
