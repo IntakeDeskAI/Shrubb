@@ -58,6 +58,7 @@ export default function AiSettingsPage() {
   const [testing, setTesting] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [connected, setConnected] = useState<Record<string, boolean>>({});
+  const [editing, setEditing] = useState<Record<string, boolean>>({});
 
   // Load saved settings on mount
   useEffect(() => {
@@ -144,6 +145,7 @@ export default function AiSettingsPage() {
       }
       if (googleMapsKey) connState['google-maps'] = true;
       setConnected(connState);
+      setEditing({}); // Lock fields back down after save
     } catch (err) {
       setTestResult(`Error saving: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
@@ -175,6 +177,10 @@ export default function AiSettingsPage() {
     } finally {
       setTesting(null);
     }
+  }
+
+  function isLocked(provider: string) {
+    return connected[provider] && !editing[provider];
   }
 
   function ConnectedBadge({ provider }: { provider: string }) {
@@ -240,15 +246,25 @@ export default function AiSettingsPage() {
                 </h3>
                 <ConnectedBadge provider={config.provider} />
               </div>
-              <label className="flex items-center gap-2 text-sm text-gray-600">
-                <input
-                  type="checkbox"
-                  checked={config.enabled}
-                  onChange={(e) => updateConfig(config.provider, { enabled: e.target.checked })}
-                  className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
-                />
-                Enabled
-              </label>
+              <div className="flex items-center gap-3">
+                {isLocked(config.provider) && (
+                  <button
+                    onClick={() => setEditing((prev) => ({ ...prev, [config.provider]: true }))}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50"
+                  >
+                    Edit
+                  </button>
+                )}
+                <label className="flex items-center gap-2 text-sm text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={config.enabled}
+                    onChange={(e) => updateConfig(config.provider, { enabled: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                  />
+                  Enabled
+                </label>
+              </div>
             </div>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -258,8 +274,13 @@ export default function AiSettingsPage() {
                   type="password"
                   value={config.apiKey}
                   onChange={(e) => updateConfig(config.provider, { apiKey: e.target.value })}
+                  disabled={isLocked(config.provider)}
                   placeholder={config.provider === 'openai' ? 'sk-...' : 'sk-ant-...'}
-                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${
+                    isLocked(config.provider)
+                      ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400'
+                      : 'border-gray-200 bg-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'
+                  }`}
                 />
               </div>
               <div>
@@ -267,7 +288,12 @@ export default function AiSettingsPage() {
                 <select
                   value={config.model}
                   onChange={(e) => updateConfig(config.provider, { model: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  disabled={isLocked(config.provider)}
+                  className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${
+                    isLocked(config.provider)
+                      ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400'
+                      : 'border-gray-200 bg-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'
+                  }`}
                 >
                   {AVAILABLE_MODELS[config.provider].map((m) => (
                     <option key={m} value={m}>{m}</option>
@@ -279,7 +305,7 @@ export default function AiSettingsPage() {
             <div className="mt-4">
               <button
                 onClick={() => handleTest(config.provider)}
-                disabled={testing === config.provider || !config.apiKey}
+                disabled={testing === config.provider || !config.apiKey || isLocked(config.provider)}
                 className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
               >
                 {testing === config.provider ? 'Testing...' : 'Test Connection'}
@@ -318,19 +344,24 @@ export default function AiSettingsPage() {
                     <h3 className="text-lg font-semibold text-gray-900">Bland.ai</h3>
                     <ConnectedBadge provider="bland" />
                   </div>
-                  <label className="flex items-center gap-2 text-sm text-gray-600">
-                    <input type="checkbox" checked={bland.enabled} onChange={(e) => toggleCommProvider('bland', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500" />
-                    Enabled
-                  </label>
+                  <div className="flex items-center gap-3">
+                    {isLocked('bland') && (
+                      <button onClick={() => setEditing((prev) => ({ ...prev, bland: true }))} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50">Edit</button>
+                    )}
+                    <label className="flex items-center gap-2 text-sm text-gray-600">
+                      <input type="checkbox" checked={bland.enabled} onChange={(e) => toggleCommProvider('bland', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500" />
+                      Enabled
+                    </label>
+                  </div>
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">API Key</label>
-                    <input type="password" value={bland.fields.apiKey} onChange={(e) => updateCommConfig('bland', 'apiKey', e.target.value)} placeholder="bland-..." className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+                    <input type="password" value={bland.fields.apiKey} onChange={(e) => updateCommConfig('bland', 'apiKey', e.target.value)} disabled={isLocked('bland')} placeholder="bland-..." className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${isLocked('bland') ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400' : 'border-gray-200 bg-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'}`} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Webhook Secret</label>
-                    <input type="password" value={bland.fields.webhookSecret} onChange={(e) => updateCommConfig('bland', 'webhookSecret', e.target.value)} placeholder="whsec_..." className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+                    <input type="password" value={bland.fields.webhookSecret} onChange={(e) => updateCommConfig('bland', 'webhookSecret', e.target.value)} disabled={isLocked('bland')} placeholder="whsec_..." className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${isLocked('bland') ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400' : 'border-gray-200 bg-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'}`} />
                   </div>
                 </div>
                 <div className="mt-4">
@@ -354,27 +385,32 @@ export default function AiSettingsPage() {
                     <h3 className="text-lg font-semibold text-gray-900">Twilio</h3>
                     <ConnectedBadge provider="twilio" />
                   </div>
-                  <label className="flex items-center gap-2 text-sm text-gray-600">
-                    <input type="checkbox" checked={twilio.enabled} onChange={(e) => toggleCommProvider('twilio', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500" />
-                    Enabled
-                  </label>
+                  <div className="flex items-center gap-3">
+                    {isLocked('twilio') && (
+                      <button onClick={() => setEditing((prev) => ({ ...prev, twilio: true }))} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50">Edit</button>
+                    )}
+                    <label className="flex items-center gap-2 text-sm text-gray-600">
+                      <input type="checkbox" checked={twilio.enabled} onChange={(e) => toggleCommProvider('twilio', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500" />
+                      Enabled
+                    </label>
+                  </div>
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Account SID</label>
-                    <input type="text" value={twilio.fields.accountSid} onChange={(e) => updateCommConfig('twilio', 'accountSid', e.target.value)} placeholder="AC..." className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+                    <input type="text" value={twilio.fields.accountSid} onChange={(e) => updateCommConfig('twilio', 'accountSid', e.target.value)} disabled={isLocked('twilio')} placeholder="AC..." className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${isLocked('twilio') ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400' : 'border-gray-200 bg-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'}`} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Auth Token</label>
-                    <input type="password" value={twilio.fields.authToken} onChange={(e) => updateCommConfig('twilio', 'authToken', e.target.value)} placeholder="Auth token..." className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+                    <input type="password" value={twilio.fields.authToken} onChange={(e) => updateCommConfig('twilio', 'authToken', e.target.value)} disabled={isLocked('twilio')} placeholder="Auth token..." className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${isLocked('twilio') ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400' : 'border-gray-200 bg-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'}`} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Webhook Secret</label>
-                    <input type="password" value={twilio.fields.webhookSecret} onChange={(e) => updateCommConfig('twilio', 'webhookSecret', e.target.value)} placeholder="Token for webhook verification..." className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+                    <input type="password" value={twilio.fields.webhookSecret} onChange={(e) => updateCommConfig('twilio', 'webhookSecret', e.target.value)} disabled={isLocked('twilio')} placeholder="Token for webhook verification..." className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${isLocked('twilio') ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400' : 'border-gray-200 bg-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'}`} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-                    <input type="text" value={twilio.fields.phoneNumber} onChange={(e) => updateCommConfig('twilio', 'phoneNumber', e.target.value)} placeholder="+1 (555) 123-4567" className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+                    <input type="text" value={twilio.fields.phoneNumber} onChange={(e) => updateCommConfig('twilio', 'phoneNumber', e.target.value)} disabled={isLocked('twilio')} placeholder="+1 (555) 123-4567" className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${isLocked('twilio') ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400' : 'border-gray-200 bg-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'}`} />
                   </div>
                 </div>
                 <div className="mt-4">
@@ -400,9 +436,14 @@ export default function AiSettingsPage() {
         <h2 className="text-lg font-semibold text-gray-900">Third-Party API Keys</h2>
         <p className="mt-1 text-sm text-gray-500">Keys for external services used across the app.</p>
         <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
-          <div className="flex items-center gap-3">
-            <h3 className="text-base font-semibold text-gray-900">Google Maps / Places</h3>
-            <ConnectedBadge provider="google-maps" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <h3 className="text-base font-semibold text-gray-900">Google Maps / Places</h3>
+              <ConnectedBadge provider="google-maps" />
+            </div>
+            {isLocked('google-maps') && (
+              <button onClick={() => setEditing((prev) => ({ ...prev, 'google-maps': true }))} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50">Edit</button>
+            )}
           </div>
           <p className="mt-1 text-xs text-gray-500">Used for address autocomplete on client and project forms.</p>
           <div className="mt-3">
@@ -411,8 +452,13 @@ export default function AiSettingsPage() {
               type="password"
               value={googleMapsKey}
               onChange={(e) => setGoogleMapsKey(e.target.value)}
+              disabled={isLocked('google-maps')}
               placeholder="AIza..."
-              className="mt-1 w-full max-w-md rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className={`mt-1 w-full max-w-md rounded-lg border px-3 py-2 text-sm ${
+                isLocked('google-maps')
+                  ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400'
+                  : 'border-gray-200 bg-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'
+              }`}
             />
             <p className="mt-1 text-xs text-gray-400">
               Also set as <code className="rounded bg-gray-100 px-1 py-0.5 text-[11px]">NEXT_PUBLIC_GOOGLE_PLACES_API_KEY</code> in your environment variables.
