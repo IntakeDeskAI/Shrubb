@@ -42,6 +42,7 @@ export function estimateCost(
 // ---------------------------------------------------------------------------
 export interface UsageEntry {
   user_id: string;
+  company_id: string;
   project_id?: string;
   message_id?: string;
   run_type: string; // 'planner' | 'render' | 'classify' | 'pdf' | 'chat' | 'satellite'
@@ -62,6 +63,7 @@ export async function trackUsage(
 ): Promise<void> {
   const { error } = await supabase.from('usage_ledger').insert({
     user_id: entry.user_id,
+    company_id: entry.company_id,
     project_id: entry.project_id ?? null,
     message_id: entry.message_id ?? null,
     run_type: entry.run_type,

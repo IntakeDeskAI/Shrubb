@@ -8,6 +8,7 @@ export async function handleSatelliteFetch(
   _supabase: SupabaseClient,
   payload: Record<string, unknown>,
   _userId: string,
+  _companyId: string,
 ): Promise<Record<string, unknown>> {
   const projectId = payload.project_id as string;
   const address = payload.address as string;
@@ -20,7 +21,7 @@ export async function handleSatelliteFetch(
   // TODO: Integrate Google Maps Static API or Mapbox Satellite
   // 1. Geocode address to lat/lng
   // 2. Fetch satellite tile at appropriate zoom level
-  // 3. Upload to storage bucket 'satellite'
+  // 3. Upload to storage bucket 'satellite' (company-scoped path)
   // 4. Create project_input record with storage_path
   // 5. Optionally update project lat/lng
 

@@ -35,13 +35,13 @@ export async function middleware(request: NextRequest) {
   // Redirect unauthenticated users away from protected app routes
   if (!user && path.startsWith('/app')) {
     const url = request.nextUrl.clone();
-    url.pathname = '/auth/login';
+    url.pathname = '/login';
     url.searchParams.set('redirect', path);
     return NextResponse.redirect(url);
   }
 
   // Redirect authenticated users away from auth pages (unless they have a redirect param)
-  if (user && path.startsWith('/auth/')) {
+  if (user && (path === '/login' || path === '/signup')) {
     const redirect = request.nextUrl.searchParams.get('redirect');
     const url = request.nextUrl.clone();
     url.pathname = redirect || '/app';
@@ -49,9 +49,25 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // For authenticated users hitting /app routes (except onboarding), check company membership
+  if (user && path.startsWith('/app') && !path.startsWith('/app/onboarding')) {
+    const { data: membership } = await supabase
+      .from('company_members')
+      .select('company_id')
+      .limit(1)
+      .maybeSingle();
+
+    if (!membership) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/app/onboarding';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }
 
 export const config = {
-  matcher: ['/app/:path*', '/auth/:path*', '/admin/:path*', '/start/:path*'],
+  matcher: ['/app/:path*', '/login', '/signup', '/admin/:path*', '/start/:path*'],
 };

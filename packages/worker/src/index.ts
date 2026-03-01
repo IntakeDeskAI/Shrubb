@@ -20,7 +20,8 @@ export type WorkerSupabase = SupabaseClient;
 type JobHandler = (
   supabase: WorkerSupabase,
   payload: Record<string, unknown>,
-  userId: string
+  userId: string,
+  companyId: string,
 ) => Promise<Record<string, unknown>>;
 
 const handlers: Record<string, JobHandler> = {
@@ -35,10 +36,42 @@ const handlers: Record<string, JobHandler> = {
 interface JobRow {
   id: string;
   user_id: string;
+  company_id: string | null;
   type: string;
   status: string;
   payload: Record<string, unknown>;
   attempts: number;
+}
+
+/**
+ * Resolve company_id for a job. Uses job.company_id if present,
+ * otherwise falls back to looking it up from the project.
+ */
+async function resolveCompanyId(job: JobRow): Promise<string> {
+  if (job.company_id) return job.company_id;
+
+  // Fallback: resolve from project
+  const projectId = job.payload.project_id as string | undefined;
+  if (projectId) {
+    const { data } = await supabase
+      .from('projects')
+      .select('company_id')
+      .eq('id', projectId)
+      .single();
+    if (data?.company_id) return data.company_id;
+  }
+
+  // Last resort: resolve from user's company membership
+  const { data: membership } = await supabase
+    .from('company_members')
+    .select('company_id')
+    .eq('user_id', job.user_id)
+    .limit(1)
+    .maybeSingle();
+
+  if (membership?.company_id) return membership.company_id;
+
+  throw new Error(`Cannot resolve company_id for job ${job.id}`);
 }
 
 async function pollAndProcess(): Promise<void> {
@@ -78,7 +111,10 @@ async function pollAndProcess(): Promise<void> {
     }
 
     try {
-      const result = await handler(supabase, jobData.payload, jobData.user_id);
+      // Resolve company_id before calling handler
+      const companyId = await resolveCompanyId(jobData);
+
+      const result = await handler(supabase, jobData.payload, jobData.user_id, companyId);
 
       await supabase
         .from('jobs')

@@ -5,10 +5,6 @@ import { createServiceClient } from '@/lib/supabase/server';
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Normalise a phone number to 10-digit US format (no country code, no
- * punctuation). Handles "+15551234567", "15551234567", "5551234567", etc.
- */
 function normalizePhone(raw: string): string {
   const digits = raw.replace(/\D/g, '');
   if (digits.length === 11 && digits.startsWith('1')) {
@@ -27,7 +23,7 @@ interface BlandWebhookPayload {
   to: string;
   transcript: string | null;
   duration_minutes: number;
-  status: string; // 'completed', 'failed', 'no-answer', etc.
+  status: string;
   ended_reason: string | null;
 }
 
@@ -42,7 +38,6 @@ export async function POST(request: Request) {
     const expectedSecret = process.env.BLAND_WEBHOOK_SECRET;
 
     if (expectedSecret) {
-      // Accept "Bearer <secret>" or plain secret
       const provided = authHeader.startsWith('Bearer ')
         ? authHeader.slice(7)
         : authHeader;
@@ -103,11 +98,28 @@ export async function POST(request: Request) {
 
     const userId = profile.id;
 
-    // ---- 4. Find user's most recent active project ----
+    // ---- 3b. Resolve user's company ----
+    const { data: companyRow } = await supabase.rpc('get_user_company', {
+      p_user_id: userId,
+    });
+
+    const companyId =
+      Array.isArray(companyRow) && companyRow.length > 0
+        ? companyRow[0].company_id
+        : null;
+
+    if (!companyId) {
+      console.warn(
+        `Bland webhook: no company for user ${userId} (call ${call_id})`
+      );
+      return NextResponse.json({ received: true }, { status: 200 });
+    }
+
+    // ---- 4. Find company's most recent active project ----
     const { data: project, error: projectError } = await supabase
       .from('projects')
       .select('id')
-      .eq('user_id', userId)
+      .eq('company_id', companyId)
       .in('status', ['setup', 'active', 'planning'])
       .order('created_at', { ascending: false })
       .limit(1)
@@ -120,7 +132,7 @@ export async function POST(request: Request) {
 
     if (!project) {
       console.warn(
-        `Bland webhook: no active project for user ${userId} (call ${call_id})`
+        `Bland webhook: no active project for company ${companyId} (call ${call_id})`
       );
       return NextResponse.json({ received: true }, { status: 200 });
     }
@@ -129,18 +141,18 @@ export async function POST(request: Request) {
 
     // ---- 5. Process completed calls with transcripts ----
     if (status === 'completed' && transcript && transcript.trim().length > 0) {
-      // 5a. Increment voice minutes usage
+      // 5a. Increment voice minutes usage (company-scoped)
       const minutes = Math.ceil(duration_minutes || 1);
       const { data: voiceAllowed, error: voiceError } = await supabase.rpc(
         'increment_voice_usage',
-        { p_user_id: userId, p_minutes: minutes }
+        { p_company_id: companyId, p_minutes: minutes }
       );
 
       if (voiceError) {
         console.error('Bland webhook: voice usage error', voiceError);
       } else if (voiceAllowed === false) {
         console.warn(
-          `Bland webhook: voice minutes exceeded for user ${userId} (call ${call_id})`
+          `Bland webhook: voice minutes exceeded for company ${companyId} (call ${call_id})`
         );
       }
 
@@ -166,6 +178,7 @@ export async function POST(request: Request) {
       // 5c. Queue classifier + chat_response jobs
       const { error: classifierError } = await supabase.from('jobs').insert({
         user_id: userId,
+        company_id: companyId,
         project_id: projectId,
         type: 'classifier',
         status: 'queued',
@@ -182,6 +195,7 @@ export async function POST(request: Request) {
 
       const { error: chatJobError } = await supabase.from('jobs').insert({
         user_id: userId,
+        company_id: companyId,
         project_id: projectId,
         type: 'chat_response',
         status: 'queued',
@@ -200,7 +214,6 @@ export async function POST(request: Request) {
     // ---- 6. Return 200 OK ----
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (err) {
-    // Always return 200 to prevent Bland retries
     console.error('Bland webhook: unhandled error', err);
     return NextResponse.json({ received: true }, { status: 200 });
   }

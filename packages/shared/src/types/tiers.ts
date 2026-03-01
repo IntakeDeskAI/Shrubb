@@ -1,98 +1,46 @@
 // ============================================================
-// Tier & Add-on Configuration
+// B2B Plan & Add-on Configuration
 // Single source of truth for pricing, entitlements, and spending caps
 // ============================================================
 
-export const TIER_CONFIG = {
+export const B2B_PLANS = {
+  trial: {
+    label: 'Trial', price_cents: 0, interval: null as null, trial_days: 7,
+    seats: 3, proposals_per_month: 3, chat_messages: 15, renders: 6,
+    spending_cap_cents: 1000,
+    features: ['3 proposals', '6 renders', '7 day trial', 'No overages'],
+  },
   starter: {
-    label: 'Starter',
-    price_cents: 7900,
-    chat_messages: 5,
-    rerenders: 0,
-    projects: 1,
-    concepts: 2,
-    voice_minutes: 0,
-    spending_cap_cents: 800,
-    features: [
-      '1 project',
-      '2 concepts',
-      'Plant palette & shopping list',
-      '5 chat messages',
-    ],
+    label: 'Starter', price_cents: 19900, interval: 'month' as const,
+    seats: 3, proposals_per_month: 15, chat_messages: 30, renders: 10,
+    spending_cap_cents: 3000,
+    features: ['3 users', '15 proposals/mo', '30 chat messages/mo', '10 renders/mo', '1 proposal template', 'Email send + tracking'],
   },
-  standard: {
-    label: 'Standard',
-    price_cents: 14900,
-    chat_messages: 25,
-    rerenders: 1,
-    projects: 1,
-    concepts: 4,
-    voice_minutes: 0,
-    spending_cap_cents: 1800,
-    features: [
-      '1 project',
-      '4 concepts',
-      'Annotated layout',
-      'PDF export',
-      '25 chat messages',
-      '1 rerender pass included',
-    ],
+  pro: {
+    label: 'Pro', price_cents: 39900, interval: 'month' as const,
+    seats: 8, proposals_per_month: 50, chat_messages: 120, renders: 40,
+    spending_cap_cents: 8000,
+    features: ['8 users', '50 proposals/mo', '120 chat messages/mo', '40 renders/mo', 'Brand kit + templates', 'Client records + follow-ups', 'Priority render queue'],
   },
-  premium: {
-    label: 'Premium',
-    price_cents: 39900,
-    chat_messages: 80,
-    rerenders: 2,
-    projects: 2,
-    concepts: 6,
-    voice_minutes: 0,
-    spending_cap_cents: 4500,
-    features: [
-      '2 projects',
-      '6 concepts',
-      'Install-ready pack: phased plan, irrigation notes, lighting notes',
-      'PDF export',
-      '80 chat messages',
-      '2 rerender passes included',
-    ],
+  growth: {
+    label: 'Growth', price_cents: 69900, interval: 'month' as const,
+    seats: 15, proposals_per_month: 120, chat_messages: 300, renders: 100,
+    spending_cap_cents: 20000,
+    features: ['15 users', '120 proposals/mo', '300 chat messages/mo', '100 renders/mo', 'Multi-location', 'Team roles + approvals', 'API access roadmap'],
   },
 } as const;
 
-export const ADDON_CONFIG = {
-  chat_pack: {
-    label: 'Chat Pack',
-    description: '20 additional messages',
-    price_cents: 1900,
-    chat_messages: 20,
-  },
-  rerender_pack: {
-    label: 'Rerender Pack',
-    description: '2 additional rerenders',
-    price_cents: 2900,
-    rerenders: 2,
-  },
-  second_project: {
-    label: 'Second Project',
-    description: '1 additional project',
-    price_cents: 4900,
-    projects: 1,
-  },
-  voice_pack_15: {
-    label: 'Voice Pack (15 min)',
-    description: '15 minutes of AI voice calls',
-    price_cents: 2900,
-    voice_minutes: 15,
-  },
-  voice_pack_40: {
-    label: 'Voice Pack (40 min)',
-    description: '40 minutes of AI voice calls',
-    price_cents: 5900,
-    voice_minutes: 40,
-  },
+export type B2BPlanName = keyof typeof B2B_PLANS;
+
+export const B2B_ADDONS = {
+  proposal_pack: { label: 'Proposal Pack', description: '20 additional proposals', price_cents: 7900, proposals: 20 },
+  render_pack: { label: 'Render Pack', description: '25 additional renders', price_cents: 5900, renders: 25 },
+  chat_pack: { label: 'Chat Pack', description: '200 additional messages', price_cents: 3900, chat_messages: 200 },
+  voice_pack: { label: 'Voice Pack', description: '60 minutes of AI voice calls', price_cents: 9900, voice_minutes: 60 },
+  extra_seat: { label: 'Extra Seat', description: '1 additional user/month', price_cents: 1900, seats: 1 },
 } as const;
 
-export type TierName = keyof typeof TIER_CONFIG;
-export type AddonName = keyof typeof ADDON_CONFIG;
+export type B2BAddonName = keyof typeof B2B_ADDONS;
 
 /** Structured planner output schema */
 export interface PlannerJson {
@@ -154,23 +102,23 @@ export interface ProjectPreferences {
   notes?: string;
 }
 
-/** Comparison table feature for pricing display */
-export interface PricingFeature {
+/** B2B comparison table feature for pricing display */
+export interface B2BPricingFeature {
   label: string;
   starter: string | boolean;
-  standard: string | boolean;
-  premium: string | boolean;
+  pro: string | boolean;
+  growth: string | boolean;
 }
 
-export const PRICING_COMPARISON: PricingFeature[] = [
-  { label: 'Projects', starter: '1', standard: '1', premium: '2' },
-  { label: 'Concepts', starter: '2', standard: '4', premium: '6' },
-  { label: 'Chat iterations', starter: '5', standard: '25', premium: '80' },
-  { label: 'Plant palette & shopping list', starter: true, standard: true, premium: true },
-  { label: 'Annotated layout', starter: false, standard: true, premium: true },
-  { label: 'PDF export', starter: false, standard: true, premium: true },
-  { label: 'Rerender passes', starter: '0', standard: '1', premium: '2' },
-  { label: 'Install-ready pack', starter: false, standard: false, premium: true },
-  { label: 'Phased plan', starter: false, standard: false, premium: true },
-  { label: 'Irrigation & lighting notes', starter: false, standard: false, premium: true },
+export const B2B_PRICING_COMPARISON: B2BPricingFeature[] = [
+  { label: 'Users', starter: '3', pro: '8', growth: '15' },
+  { label: 'Proposals/month', starter: '15', pro: '50', growth: '120' },
+  { label: 'Chat messages/month', starter: '30', pro: '120', growth: '300' },
+  { label: 'Renders/month', starter: '10', pro: '40', growth: '100' },
+  { label: 'Proposal templates', starter: '1', pro: true, growth: true },
+  { label: 'Brand kit', starter: false, pro: true, growth: true },
+  { label: 'Client records', starter: false, pro: true, growth: true },
+  { label: 'Priority queue', starter: false, pro: true, growth: true },
+  { label: 'Multi-location', starter: false, pro: false, growth: true },
+  { label: 'Team roles', starter: false, pro: false, growth: true },
 ];

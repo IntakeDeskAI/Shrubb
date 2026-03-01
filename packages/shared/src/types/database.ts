@@ -40,6 +40,8 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
+          company_id: string | null;
+          client_id: string | null;
           name: string;
           address: string | null;
           status: string;
@@ -52,6 +54,8 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
+          company_id?: string | null;
+          client_id?: string | null;
           name: string;
           address?: string | null;
           status?: string;
@@ -63,6 +67,8 @@ export interface Database {
         };
         Update: {
           name?: string;
+          company_id?: string | null;
+          client_id?: string | null;
           address?: string | null;
           status?: string;
           preferences?: ProjectPreferences;
@@ -74,16 +80,22 @@ export interface Database {
       entitlements: {
         Row: {
           id: string;
-          user_id: string;
+          user_id: string | null;
+          company_id: string | null;
           tier: string;
           included_chat_messages: number;
           included_rerenders: number;
           included_projects: number;
           included_voice_minutes: number;
+          included_proposals: number;
+          included_renders: number;
+          included_seats: number;
           chat_messages_used: number;
           rerenders_used: number;
           projects_used: number;
           voice_minutes_used: number;
+          proposals_used: number;
+          renders_used: number;
           spending_cap_cents: number;
           spending_used_cents: number;
           expires_at: string | null;
@@ -92,16 +104,22 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          user_id: string;
+          user_id?: string | null;
+          company_id?: string | null;
           tier: string;
           included_chat_messages?: number;
           included_rerenders?: number;
           included_projects?: number;
           included_voice_minutes?: number;
+          included_proposals?: number;
+          included_renders?: number;
+          included_seats?: number;
           chat_messages_used?: number;
           rerenders_used?: number;
           projects_used?: number;
           voice_minutes_used?: number;
+          proposals_used?: number;
+          renders_used?: number;
           spending_cap_cents?: number;
           spending_used_cents?: number;
           expires_at?: string | null;
@@ -110,14 +128,20 @@ export interface Database {
         };
         Update: {
           tier?: string;
+          company_id?: string | null;
           included_chat_messages?: number;
           included_rerenders?: number;
           included_projects?: number;
           included_voice_minutes?: number;
+          included_proposals?: number;
+          included_renders?: number;
+          included_seats?: number;
           chat_messages_used?: number;
           rerenders_used?: number;
           projects_used?: number;
           voice_minutes_used?: number;
+          proposals_used?: number;
+          renders_used?: number;
           spending_cap_cents?: number;
           spending_used_cents?: number;
           expires_at?: string | null;
@@ -128,6 +152,7 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
+          company_id: string | null;
           stripe_customer_id: string | null;
           stripe_payment_intent_id: string | null;
           product_type: string;
@@ -139,6 +164,7 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
+          company_id?: string | null;
           stripe_customer_id?: string | null;
           stripe_payment_intent_id?: string | null;
           product_type: string;
@@ -262,6 +288,7 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
+          company_id: string | null;
           project_id: string | null;
           message_id: string | null;
           run_type: string;
@@ -276,6 +303,7 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
+          company_id?: string | null;
           project_id?: string | null;
           message_id?: string | null;
           run_type: string;
@@ -337,10 +365,126 @@ export interface Database {
           image_url?: string | null;
         };
       };
+      companies: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          trial_ends_at: string | null;
+          plan: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          trial_ends_at?: string | null;
+          plan?: string;
+        };
+        Update: {
+          name?: string;
+          slug?: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          trial_ends_at?: string | null;
+          plan?: string;
+        };
+      };
+      company_members: {
+        Row: {
+          id: string;
+          company_id: string;
+          user_id: string;
+          role: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          user_id: string;
+          role?: string;
+        };
+        Update: {
+          role?: string;
+        };
+      };
+      clients: {
+        Row: {
+          id: string;
+          company_id: string;
+          name: string;
+          email: string | null;
+          phone: string | null;
+          address: string | null;
+          notes: string | null;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          name: string;
+          email?: string | null;
+          phone?: string | null;
+          address?: string | null;
+          notes?: string | null;
+          status?: string;
+        };
+        Update: {
+          name?: string;
+          email?: string | null;
+          phone?: string | null;
+          address?: string | null;
+          notes?: string | null;
+          status?: string;
+        };
+      };
+      proposals: {
+        Row: {
+          id: string;
+          company_id: string;
+          project_id: string;
+          client_id: string;
+          created_by: string | null;
+          status: string;
+          sent_at: string | null;
+          viewed_at: string | null;
+          accepted_at: string | null;
+          message: string | null;
+          share_token: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          project_id: string;
+          client_id: string;
+          created_by?: string | null;
+          status?: string;
+          message?: string | null;
+          share_token?: string | null;
+        };
+        Update: {
+          status?: string;
+          sent_at?: string | null;
+          viewed_at?: string | null;
+          accepted_at?: string | null;
+          message?: string | null;
+          share_token?: string | null;
+        };
+      };
       jobs: {
         Row: {
           id: string;
           user_id: string;
+          company_id: string | null;
           project_id: string | null;
           type: JobType;
           status: JobStatus;
@@ -356,6 +500,7 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
+          company_id?: string | null;
           project_id?: string | null;
           type: JobType;
           status?: JobStatus;
@@ -369,6 +514,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
+          company_id?: string | null;
           project_id?: string | null;
           type?: JobType;
           status?: JobStatus;

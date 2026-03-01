@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { getActiveCompany } from '@/lib/company';
 import { redirect, notFound } from 'next/navigation';
 import { ChatPanel } from '@/components/chat/chat-panel';
 import { PreviewTabs } from '@/components/chat/preview-tabs';
@@ -15,14 +16,17 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect('/auth/login');
+  if (!user) redirect('/login');
 
-  // Load project and verify ownership
+  const company = await getActiveCompany(supabase, user.id);
+  if (!company) redirect('/app/onboarding');
+
+  // Load project and verify company ownership
   const { data: project, error: projectError } = await supabase
     .from('projects')
     .select('*')
     .eq('id', id)
-    .eq('user_id', user.id)
+    .eq('company_id', company.companyId)
     .single();
 
   if (projectError || !project) {

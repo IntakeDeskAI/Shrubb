@@ -5,6 +5,9 @@ const ALLOWED_FIELDS = [
   'included_chat_messages',
   'included_rerenders',
   'included_projects',
+  'included_proposals',
+  'included_renders',
+  'included_seats',
 ] as const;
 
 type AllowedField = (typeof ALLOWED_FIELDS)[number];
@@ -29,7 +32,7 @@ export async function POST(request: Request) {
   }
 
   // 2. Parse body
-  let body: { user_id?: string; field?: string; amount?: number };
+  let body: { company_id?: string; field?: string; amount?: number };
   try {
     body = await request.json();
   } catch {
@@ -39,11 +42,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const { user_id, field, amount } = body;
+  const { company_id, field, amount } = body;
 
-  if (!user_id || !field || typeof amount !== 'number' || amount <= 0) {
+  if (!company_id || !field || typeof amount !== 'number' || amount <= 0) {
     return NextResponse.json(
-      { error: 'Missing or invalid user_id, field, or amount' },
+      { error: 'Missing or invalid company_id, field, or amount' },
       { status: 400 },
     );
   }
@@ -57,10 +60,10 @@ export async function POST(request: Request) {
     );
   }
 
-  // 3. Call RPC with service client
+  // 3. Call RPC with service client (company-scoped)
   const serviceClient = await createServiceClient();
   const { error } = await serviceClient.rpc('increment_entitlement_field', {
-    p_user_id: user_id,
+    p_company_id: company_id,
     p_field: field,
     p_amount: amount,
   });
@@ -73,5 +76,5 @@ export async function POST(request: Request) {
   }
 
   // 4. Return success
-  return NextResponse.json({ success: true, user_id, field, amount });
+  return NextResponse.json({ success: true, company_id, field, amount });
 }

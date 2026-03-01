@@ -1,16 +1,16 @@
 import { type SupabaseClient } from '@supabase/supabase-js';
 
 // ---------------------------------------------------------------------------
-// Check whether the user can afford the estimated cost
+// Check whether the company can afford the estimated cost
 // Returns true if spending is within cap, false if it would exceed.
 // ---------------------------------------------------------------------------
 export async function checkSpendingCap(
   supabase: SupabaseClient,
-  userId: string,
+  companyId: string,
   estimatedCostCents: number,
 ): Promise<boolean> {
   const { data, error } = await supabase.rpc('check_spending_cap', {
-    p_user_id: userId,
+    p_company_id: companyId,
     p_additional_cost_cents: estimatedCostCents,
   });
 
@@ -30,11 +30,11 @@ export async function checkSpendingCap(
 // ---------------------------------------------------------------------------
 export async function incrementSpending(
   supabase: SupabaseClient,
-  userId: string,
+  companyId: string,
   costCents: number,
 ): Promise<void> {
   const { error } = await supabase.rpc('increment_spending', {
-    p_user_id: userId,
+    p_company_id: companyId,
     p_amount: costCents,
   });
 

@@ -15,6 +15,7 @@ export async function handlePlanner(
   supabase: SupabaseClient,
   payload: Record<string, unknown>,
   userId: string,
+  companyId: string,
 ): Promise<Record<string, unknown>> {
   const designRunId = payload.design_run_id as string;
   const projectId = payload.project_id as string;
@@ -36,11 +37,11 @@ export async function handlePlanner(
     .select('input_type, storage_path')
     .eq('project_id', projectId);
 
-  // 2. Check spending cap (estimate ~2k tokens in, ~4k out)
+  // 2. Check spending cap (company-scoped)
   const estimatedCostUsd = estimateCost(2000, 4000, MODEL);
   const estimatedCostCents = Math.ceil(estimatedCostUsd * 100);
 
-  const withinCap = await checkSpendingCap(supabase, userId, estimatedCostCents);
+  const withinCap = await checkSpendingCap(supabase, companyId, estimatedCostCents);
   if (!withinCap) {
     throw new Error('Spending cap exceeded. Please upgrade your plan or add funds.');
   }
@@ -112,10 +113,11 @@ Produce a complete landscape plan as JSON.`;
     throw new Error('GPT-4o returned invalid JSON for planner output');
   }
 
-  // 5. Track usage
+  // 5. Track usage (company-scoped)
   const actualCost = estimateCost(tokensIn, tokensOut, MODEL);
   await trackUsage(supabase, {
     user_id: userId,
+    company_id: companyId,
     project_id: projectId,
     run_type: 'planner',
     tokens_in: tokensIn,
@@ -126,8 +128,8 @@ Produce a complete landscape plan as JSON.`;
     model: MODEL,
   });
 
-  // 6. Increment spending
-  await incrementSpending(supabase, userId, Math.ceil(actualCost * 100));
+  // 6. Increment spending (company-scoped)
+  await incrementSpending(supabase, companyId, Math.ceil(actualCost * 100));
 
   // 7. Save planner_json to design_runs
   const { error: updateErr } = await supabase

@@ -15,16 +15,17 @@ export async function handleClassifier(
   supabase: SupabaseClient,
   payload: Record<string, unknown>,
   userId: string,
+  companyId: string,
 ): Promise<Record<string, unknown>> {
   const messageId = payload.message_id as string;
   const projectId = payload.project_id as string;
   const content = payload.content as string;
 
-  // 1. Check spending cap (classifier is cheap — estimate ~200 tokens)
+  // 1. Check spending cap (company-scoped)
   const estimatedCostUsd = estimateCost(200, 50, MODEL);
   const estimatedCostCents = Math.ceil(estimatedCostUsd * 100);
 
-  const withinCap = await checkSpendingCap(supabase, userId, estimatedCostCents);
+  const withinCap = await checkSpendingCap(supabase, companyId, estimatedCostCents);
   if (!withinCap) {
     throw new Error('Spending cap exceeded. Please upgrade your plan or add funds.');
   }
@@ -66,10 +67,11 @@ Respond with ONLY the intent string, nothing else.`,
     console.warn(`[classifier] Failed to update message intent: ${updateErr.message}`);
   }
 
-  // 4. Track usage
+  // 4. Track usage (company-scoped)
   const actualCost = estimateCost(tokensIn, tokensOut, MODEL);
   await trackUsage(supabase, {
     user_id: userId,
+    company_id: companyId,
     project_id: projectId,
     message_id: messageId,
     run_type: 'classify',
@@ -81,8 +83,8 @@ Respond with ONLY the intent string, nothing else.`,
     model: MODEL,
   });
 
-  // 5. Increment spending
-  await incrementSpending(supabase, userId, Math.ceil(actualCost * 100));
+  // 5. Increment spending (company-scoped)
+  await incrementSpending(supabase, companyId, Math.ceil(actualCost * 100));
 
   console.log(`[classifier] message ${messageId} intent=${intent}`);
 

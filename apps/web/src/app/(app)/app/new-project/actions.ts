@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { getActiveCompany } from '@/lib/company';
 import { redirect } from 'next/navigation';
 
 export async function createProject(formData: FormData) {
@@ -13,6 +14,14 @@ export async function createProject(formData: FormData) {
   if (!user) {
     throw new Error('Not authenticated');
   }
+
+  // Resolve company
+  const company = await getActiveCompany(supabase, user.id);
+  if (!company) {
+    throw new Error('No company found. Complete onboarding first.');
+  }
+
+  const { companyId } = company;
 
   // Parse form fields
   const inputType = formData.get('inputType') as 'photo' | 'address';
@@ -34,10 +43,10 @@ export async function createProject(formData: FormData) {
   // Determine project name
   const projectName = address?.trim() ? address.trim() : 'My Yard Project';
 
-  // 1. Increment project usage (check entitlement limits)
+  // 1. Increment project/proposal usage (company-scoped)
   const { data: usageAllowed, error: usageError } = await supabase.rpc(
     'increment_project_usage',
-    { p_user_id: user.id }
+    { p_company_id: companyId }
   );
 
   if (usageError || usageAllowed === false) {
@@ -46,11 +55,12 @@ export async function createProject(formData: FormData) {
     );
   }
 
-  // 2. Create the project
+  // 2. Create the project (company-scoped)
   const { data: project, error: projectError } = await supabase
     .from('projects')
     .insert({
       user_id: user.id,
+      company_id: companyId,
       name: projectName,
       address: address?.trim() || null,
       status: 'setup',
@@ -67,9 +77,9 @@ export async function createProject(formData: FormData) {
 
   // 3. Handle input (photo upload or address/satellite)
   if (inputType === 'photo' && photoFile && photoFile.size > 0) {
-    // Upload photo to Supabase storage inputs bucket
+    // Upload photo to Supabase storage inputs bucket (company-scoped path)
     const fileExt = photoFile.name.split('.').pop() || 'jpg';
-    const storagePath = `${user.id}/${projectId}/input.${fileExt}`;
+    const storagePath = `${companyId}/${projectId}/input.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
       .from('inputs')
@@ -124,9 +134,10 @@ export async function createProject(formData: FormData) {
     throw new Error('Failed to create design run: ' + runError.message);
   }
 
-  // 5. Queue planner and visualizer jobs
+  // 5. Queue planner and visualizer jobs (company-scoped)
   const { error: plannerJobError } = await supabase.from('jobs').insert({
     user_id: user.id,
+    company_id: companyId,
     project_id: projectId,
     type: 'planner',
     status: 'queued',
@@ -143,6 +154,7 @@ export async function createProject(formData: FormData) {
 
   const { error: visualizerJobError } = await supabase.from('jobs').insert({
     user_id: user.id,
+    company_id: companyId,
     project_id: projectId,
     type: 'visualizer',
     status: 'queued',

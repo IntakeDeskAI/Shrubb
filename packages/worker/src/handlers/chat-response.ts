@@ -16,6 +16,7 @@ export async function handleChatResponse(
   supabase: SupabaseClient,
   payload: Record<string, unknown>,
   userId: string,
+  companyId: string,
 ): Promise<Record<string, unknown>> {
   const projectId = payload.project_id as string;
   const messageId = payload.message_id as string;
@@ -55,11 +56,11 @@ export async function handleChatResponse(
     console.warn(`[chat] Failed to load messages: ${msgErr.message}`);
   }
 
-  // 3. Check spending cap
+  // 3. Check spending cap (company-scoped)
   const estimatedCostUsd = estimateCost(3000, 1500, MODEL);
   const estimatedCostCents = Math.ceil(estimatedCostUsd * 100);
 
-  const withinCap = await checkSpendingCap(supabase, userId, estimatedCostCents);
+  const withinCap = await checkSpendingCap(supabase, companyId, estimatedCostCents);
   if (!withinCap) {
     throw new Error('Spending cap exceeded. Please upgrade your plan or add funds.');
   }
@@ -158,10 +159,11 @@ Guidelines:
     console.error('[chat] Failed to send SMS reply:', smsError);
   }
 
-  // 7. Track usage
+  // 7. Track usage (company-scoped)
   const actualCost = estimateCost(tokensIn, tokensOut, MODEL);
   await trackUsage(supabase, {
     user_id: userId,
+    company_id: companyId,
     project_id: projectId,
     message_id: messageId,
     run_type: 'chat',
@@ -173,8 +175,8 @@ Guidelines:
     model: MODEL,
   });
 
-  // 8. Increment spending
-  await incrementSpending(supabase, userId, Math.ceil(actualCost * 100));
+  // 8. Increment spending (company-scoped)
+  await incrementSpending(supabase, companyId, Math.ceil(actualCost * 100));
 
   console.log(`[chat] project ${projectId} — reply ${newMsg.id} (${tokensIn}/${tokensOut} tokens)`);
 

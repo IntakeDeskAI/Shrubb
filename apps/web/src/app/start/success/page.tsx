@@ -36,12 +36,11 @@ export default async function SuccessPage({
         </div>
 
         <h1 className="mt-8 text-3xl font-semibold tracking-tight text-gray-900">
-          Purchase Confirmed!
+          You&apos;re all set!
         </h1>
 
         <p className="mt-4 text-lg text-gray-500">
-          Your plan is active and you&apos;re ready to go. Let&apos;s design your
-          dream yard.
+          Your subscription is active. Start creating AI-powered proposals for your clients.
         </p>
 
         {params.session_id && (
@@ -51,10 +50,10 @@ export default async function SuccessPage({
         )}
 
         <Link
-          href="/app/new-project"
+          href="/app"
           className="mt-10 inline-flex items-center gap-2 rounded-lg bg-brand-500 px-8 py-4 text-base font-semibold text-white transition-colors hover:bg-brand-600"
         >
-          Start Your Project
+          Go to Dashboard
           <svg
             className="h-5 w-5"
             fill="none"

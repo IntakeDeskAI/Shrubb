@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { ShrubbLogo } from '@/components/shrubb-logo';
-import { TIER_CONFIG } from '@landscape-ai/shared';
+import { B2B_PLANS } from '@landscape-ai/shared';
+import type { B2BPlanName } from '@landscape-ai/shared';
+
+const PLAN_ORDER: B2BPlanName[] = ['starter', 'pro', 'growth'];
 
 function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(0)}`;
@@ -16,11 +19,6 @@ export default async function StartPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const tiers = Object.entries(TIER_CONFIG) as [
-    keyof typeof TIER_CONFIG,
-    (typeof TIER_CONFIG)[keyof typeof TIER_CONFIG],
-  ][];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,17 +42,18 @@ export default async function StartPage({
             Choose Your Plan
           </h1>
           <p className="mt-3 text-lg text-gray-500">
-            One-time purchase. No subscriptions. Start designing your yard today.
+            Start with a 7-day free trial. Cancel anytime.
           </p>
         </div>
 
         <div className="grid gap-8 md:grid-cols-3">
-          {tiers.map(([tierName, tier]) => {
-            const isHighlighted = tierName === 'standard';
+          {PLAN_ORDER.map((planName) => {
+            const plan = B2B_PLANS[planName];
+            const isHighlighted = planName === 'pro';
 
             return (
               <div
-                key={tierName}
+                key={planName}
                 className={`relative flex flex-col rounded-2xl border bg-white p-8 shadow-sm transition-shadow hover:shadow-md ${
                   isHighlighted
                     ? 'border-brand-500 ring-2 ring-brand-500'
@@ -68,18 +67,18 @@ export default async function StartPage({
                 )}
 
                 <h2 className="text-xl font-semibold text-gray-900">
-                  {tier.label}
+                  {plan.label}
                 </h2>
 
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-4xl font-bold text-gray-900">
-                    {formatPrice(tier.price_cents)}
+                    {formatPrice(plan.price_cents)}
                   </span>
-                  <span className="text-sm text-gray-500">one-time</span>
+                  <span className="text-sm text-gray-500">/month</span>
                 </div>
 
                 <ul className="mt-8 flex-1 space-y-3">
-                  {tier.features.map((feature) => (
+                  {plan.features.map((feature) => (
                     <li
                       key={feature}
                       className="flex items-start gap-2 text-sm text-gray-600"
@@ -104,8 +103,8 @@ export default async function StartPage({
 
                 {user ? (
                   <form action="/api/stripe/checkout" method="POST" className="mt-8">
-                    <input type="hidden" name="product_type" value="tier" />
-                    <input type="hidden" name="product_name" value={tierName} />
+                    <input type="hidden" name="product_type" value="plan" />
+                    <input type="hidden" name="product_name" value={planName} />
                     <button
                       type="submit"
                       className={`w-full rounded-lg px-4 py-3 text-sm font-semibold transition-colors ${
@@ -114,19 +113,19 @@ export default async function StartPage({
                           : 'bg-gray-900 text-white hover:bg-gray-800'
                       }`}
                     >
-                      Buy Now
+                      Start Free Trial
                     </button>
                   </form>
                 ) : (
                   <a
-                    href={`/auth/login?redirect=/start&tier=${tierName}`}
+                    href={`/login?redirect=/start&plan=${planName}`}
                     className={`mt-8 block w-full rounded-lg px-4 py-3 text-center text-sm font-semibold transition-colors ${
                       isHighlighted
                         ? 'bg-brand-500 text-white hover:bg-brand-600'
                         : 'bg-gray-900 text-white hover:bg-gray-800'
                     }`}
                   >
-                    Buy Now
+                    Start Free Trial
                   </a>
                 )}
               </div>

@@ -17,7 +17,7 @@ export default function LoginPage() {
     });
 
     if (error) {
-      redirect('/auth/login?error=' + encodeURIComponent(error.message));
+      redirect('/login?error=' + encodeURIComponent(error.message));
     }
 
     redirect('/app');
@@ -84,7 +84,7 @@ export default function LoginPage() {
           <div className="mt-6 flex items-center justify-center gap-4 text-sm">
             <span className="text-gray-500">Not a member yet?</span>
             <Link
-              href="/auth/signup"
+              href="/signup"
               className="rounded-lg border border-gray-300 px-5 py-2 font-medium text-gray-700 hover:bg-gray-50"
             >
               Create an Account

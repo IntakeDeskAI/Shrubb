@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { getActiveCompany } from '@/lib/company';
 import { NextResponse } from 'next/server';
 import type { JobType } from '@landscape-ai/shared';
 
@@ -19,6 +20,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const company = await getActiveCompany(supabase, user.id);
+  if (!company) {
+    return NextResponse.json({ error: 'No company' }, { status: 403 });
+  }
+
   const body = await request.json();
   const { type, payload } = body;
 
@@ -30,11 +36,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }
 
-  // Check entitlements
+  // Check company entitlements
   const { data: entitlements } = await supabase
     .from('entitlements')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('company_id', company.companyId)
     .single();
 
   if (!entitlements || entitlements.tier === 'none') {
@@ -48,6 +54,7 @@ export async function POST(request: Request) {
     .from('jobs')
     .insert({
       user_id: user.id,
+      company_id: company.companyId,
       project_id: payload.project_id ?? null,
       type,
       status: 'queued',

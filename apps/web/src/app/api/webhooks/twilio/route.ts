@@ -25,10 +25,6 @@ function escapeXml(s: string): string {
     .replace(/'/g, '&apos;');
 }
 
-/**
- * Normalise a phone number to 10-digit US format (no country code, no
- * punctuation). Handles "+15551234567", "15551234567", "5551234567", etc.
- */
 function normalizePhone(raw: string): string {
   const digits = raw.replace(/\D/g, '');
   if (digits.length === 11 && digits.startsWith('1')) {
@@ -49,7 +45,6 @@ export async function POST(request: Request) {
     const expectedToken = process.env.TWILIO_WEBHOOK_SECRET;
 
     if (expectedToken && token !== expectedToken) {
-      // Return 200 with empty TwiML so Twilio doesn't retry
       console.warn('Twilio webhook: invalid token');
       return twiml(null);
     }
@@ -73,7 +68,6 @@ export async function POST(request: Request) {
     // ---- 3. Look up user by phone number ----
     const phoneNormalized = normalizePhone(from);
 
-    // Try both the raw E.164 and the normalized 10-digit form
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, phone')
@@ -94,11 +88,27 @@ export async function POST(request: Request) {
 
     const userId = profile.id;
 
-    // ---- 4. Find user's most recent active project ----
+    // ---- 3b. Resolve user's company ----
+    const { data: companyRow } = await supabase.rpc('get_user_company', {
+      p_user_id: userId,
+    });
+
+    const companyId =
+      Array.isArray(companyRow) && companyRow.length > 0
+        ? companyRow[0].company_id
+        : null;
+
+    if (!companyId) {
+      return twiml(
+        "Your account isn't set up yet. Complete onboarding at shrubb.com/app"
+      );
+    }
+
+    // ---- 4. Find company's most recent active project ----
     const { data: project, error: projectError } = await supabase
       .from('projects')
       .select('id')
-      .eq('user_id', userId)
+      .eq('company_id', companyId)
       .in('status', ['setup', 'active', 'planning'])
       .order('created_at', { ascending: false })
       .limit(1)
@@ -117,10 +127,10 @@ export async function POST(request: Request) {
 
     const projectId = project.id;
 
-    // ---- 5. Check entitlements ----
+    // ---- 5. Check entitlements (company-scoped) ----
     const { data: hasCredit, error: creditError } = await supabase.rpc(
       'increment_chat_usage',
-      { p_user_id: userId }
+      { p_company_id: companyId }
     );
 
     if (creditError) {
@@ -139,7 +149,6 @@ export async function POST(request: Request) {
 
     if (numMedia > 0 && mediaUrl0) {
       try {
-        // Download the media from Twilio (requires basic auth)
         const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID ?? '';
         const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN ?? '';
         const authHeader = `Basic ${Buffer.from(`${twilioAccountSid}:${twilioAuthToken}`).toString('base64')}`;
@@ -151,7 +160,7 @@ export async function POST(request: Request) {
         if (mediaResponse.ok) {
           const mediaBuffer = await mediaResponse.arrayBuffer();
           const ext = mediaContentType0.includes('png') ? 'png' : 'jpg';
-          const storagePath = `${userId}/${projectId}/sms-${messageSid}.${ext}`;
+          const storagePath = `${companyId}/${projectId}/sms-${messageSid}.${ext}`;
 
           const { error: uploadError } = await supabase.storage
             .from('inputs')
@@ -163,7 +172,6 @@ export async function POST(request: Request) {
           if (uploadError) {
             console.error('Twilio webhook: media upload error', uploadError);
           } else {
-            // Create project_input record
             await supabase.from('project_inputs').insert({
               project_id: projectId,
               input_type: 'photo',
@@ -187,7 +195,6 @@ export async function POST(request: Request) {
     const messageContent = body.trim() || (numMedia > 0 ? '[Photo]' : '');
 
     if (!messageContent) {
-      // Nothing to process — empty message with no media
       return twiml(null);
     }
 
@@ -213,6 +220,7 @@ export async function POST(request: Request) {
     // ---- 8. Queue classifier + chat_response jobs ----
     const { error: classifierError } = await supabase.from('jobs').insert({
       user_id: userId,
+      company_id: companyId,
       project_id: projectId,
       type: 'classifier',
       status: 'queued',
@@ -229,6 +237,7 @@ export async function POST(request: Request) {
 
     const { error: chatJobError } = await supabase.from('jobs').insert({
       user_id: userId,
+      company_id: companyId,
       project_id: projectId,
       type: 'chat_response',
       status: 'queued',
@@ -252,7 +261,6 @@ export async function POST(request: Request) {
 
     return twiml("Got it! Working on your request...");
   } catch (err) {
-    // Always return 200 to prevent Twilio retries
     console.error('Twilio webhook: unhandled error', err);
     return twiml(null);
   }

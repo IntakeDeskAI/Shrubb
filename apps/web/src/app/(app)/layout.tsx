@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { ShrubbLogo } from '@/components/shrubb-logo';
+import { getActiveCompany } from '@/lib/company';
 
 export default async function AppLayout({
   children,
@@ -11,7 +12,9 @@ export default async function AppLayout({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) redirect('/auth/login');
+  if (!user) redirect('/login');
+
+  const company = await getActiveCompany(supabase, user.id);
 
   async function signOut() {
     'use server';
@@ -26,8 +29,19 @@ export default async function AppLayout({
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-8">
             <ShrubbLogo size="small" color="green" href="/app" />
+            {company && (
+              <span className="text-sm font-medium text-gray-700">
+                {company.companyName}
+              </span>
+            )}
             <Link href="/app" className="text-sm text-gray-500 hover:text-gray-900">
               Projects
+            </Link>
+            <Link href="/app/clients" className="text-sm text-gray-500 hover:text-gray-900">
+              Clients
+            </Link>
+            <Link href="/app/proposals" className="text-sm text-gray-500 hover:text-gray-900">
+              Proposals
             </Link>
             <Link href="/app/settings" className="text-sm text-gray-500 hover:text-gray-900">
               Settings

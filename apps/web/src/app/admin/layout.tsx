@@ -12,7 +12,7 @@ export default async function AdminLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect('/auth/login');
+  if (!user) redirect('/login');
 
   // Check admin via user metadata (matches the is_admin() DB function which checks raw_user_meta_data->>'role' = 'admin')
   const isAdmin =

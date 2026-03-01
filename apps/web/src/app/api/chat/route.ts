@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { getActiveCompany } from '@/lib/company';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -9,6 +10,11 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const company = await getActiveCompany(supabase, user.id);
+  if (!company) {
+    return NextResponse.json({ error: 'No company' }, { status: 403 });
   }
 
   // Parse body
@@ -35,22 +41,22 @@ export async function POST(request: Request) {
     );
   }
 
-  // Verify user owns the project
+  // Verify project belongs to user's company
   const { data: project, error: projectError } = await supabase
     .from('projects')
     .select('id')
     .eq('id', project_id)
-    .eq('user_id', user.id)
+    .eq('company_id', company.companyId)
     .single();
 
   if (projectError || !project) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
 
-  // Check chat credit via RPC
+  // Check chat credit via RPC (company-scoped)
   const { data: hasCredit, error: creditError } = await supabase.rpc(
     'increment_chat_usage',
-    { p_user_id: user.id }
+    { p_company_id: company.companyId }
   );
 
   if (creditError) {
@@ -92,6 +98,7 @@ export async function POST(request: Request) {
   // Queue classifier job
   const { error: classifierError } = await supabase.from('jobs').insert({
     user_id: user.id,
+    company_id: company.companyId,
     project_id,
     type: 'classifier' as const,
     status: 'queued' as const,
@@ -109,6 +116,7 @@ export async function POST(request: Request) {
   // Queue chat_response job
   const { error: chatJobError } = await supabase.from('jobs').insert({
     user_id: user.id,
+    company_id: company.companyId,
     project_id,
     type: 'chat_response' as const,
     status: 'queued' as const,

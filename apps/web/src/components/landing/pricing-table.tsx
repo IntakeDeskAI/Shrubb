@@ -1,8 +1,8 @@
-import { TIER_CONFIG, PRICING_COMPARISON } from "@landscape-ai/shared";
-import type { TierName, PricingFeature } from "@landscape-ai/shared";
+import { B2B_PLANS, B2B_PRICING_COMPARISON } from "@landscape-ai/shared";
+import type { B2BPlanName, B2BPricingFeature } from "@landscape-ai/shared";
 import Link from "next/link";
 
-const TIER_ORDER: TierName[] = ["starter", "standard", "premium"];
+const PLAN_ORDER: B2BPlanName[] = ["starter", "pro", "growth"];
 
 function formatPrice(cents: number): string {
   return `$${Math.floor(cents / 100)}`;
@@ -45,14 +45,14 @@ function ComparisonCell({ value }: { value: string | boolean }) {
   return <span className="text-sm text-gray-700">{value}</span>;
 }
 
-function TierCard({
-  tierKey,
+function PlanCard({
+  planKey,
   highlighted,
 }: {
-  tierKey: TierName;
+  planKey: B2BPlanName;
   highlighted?: boolean;
 }) {
-  const tier = TIER_CONFIG[tierKey];
+  const plan = B2B_PLANS[planKey];
 
   return (
     <div
@@ -68,17 +68,17 @@ function TierCard({
         </span>
       )}
 
-      <h3 className="text-lg font-semibold text-gray-900">{tier.label}</h3>
+      <h3 className="text-lg font-semibold text-gray-900">{plan.label}</h3>
 
       <p className="mt-4 flex items-baseline gap-1">
         <span className="text-4xl font-bold tracking-tight text-gray-900">
-          {formatPrice(tier.price_cents)}
+          {formatPrice(plan.price_cents)}
         </span>
-        <span className="text-sm text-gray-500">one-time</span>
+        <span className="text-sm text-gray-500">/month</span>
       </p>
 
       <ul className="mt-8 flex-1 space-y-3">
-        {tier.features.map((feature) => (
+        {plan.features.map((feature) => (
           <li key={feature} className="flex items-start gap-3 text-sm text-gray-700">
             <svg
               className="mt-0.5 h-4 w-4 shrink-0 text-brand-500"
@@ -99,14 +99,14 @@ function TierCard({
       </ul>
 
       <Link
-        href={`/start?tier=${tierKey}`}
+        href={`/start?plan=${planKey}`}
         className={`mt-8 block rounded-lg px-4 py-3 text-center text-sm font-semibold transition ${
           highlighted
             ? "bg-brand-500 text-white hover:bg-brand-600"
             : "bg-gray-50 text-gray-900 ring-1 ring-inset ring-gray-200 hover:bg-gray-100"
         }`}
       >
-        Get started
+        Start free trial
       </Link>
     </div>
   );
@@ -124,28 +124,28 @@ function ComparisonTable() {
             <th className="py-3 pr-4 text-sm font-medium text-gray-500">
               Feature
             </th>
-            {TIER_ORDER.map((key) => (
+            {PLAN_ORDER.map((key) => (
               <th
                 key={key}
                 className="px-4 py-3 text-center text-sm font-semibold text-gray-900"
               >
-                {TIER_CONFIG[key].label}
+                {B2B_PLANS[key].label}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {PRICING_COMPARISON.map((row: PricingFeature) => (
+          {B2B_PRICING_COMPARISON.map((row: B2BPricingFeature) => (
             <tr key={row.label} className="border-b border-gray-100">
               <td className="py-3 pr-4 text-sm text-gray-700">{row.label}</td>
               <td className="px-4 py-3 text-center">
                 <ComparisonCell value={row.starter} />
               </td>
               <td className="px-4 py-3 text-center">
-                <ComparisonCell value={row.standard} />
+                <ComparisonCell value={row.pro} />
               </td>
               <td className="px-4 py-3 text-center">
-                <ComparisonCell value={row.premium} />
+                <ComparisonCell value={row.growth} />
               </td>
             </tr>
           ))}
@@ -159,19 +159,18 @@ export default function PricingTable() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-20">
       <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-        Simple, transparent pricing
+        Plans that grow with your business
       </h2>
       <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-gray-600">
-        Choose the plan that fits your yard project. Pay once, own your design
-        forever.
+        Start with a free trial. If you close one extra $3,000 job a month, Shrubb pays for itself.
       </p>
 
       <div className="mt-12 grid gap-8 md:grid-cols-3">
-        {TIER_ORDER.map((key) => (
-          <TierCard
+        {PLAN_ORDER.map((key) => (
+          <PlanCard
             key={key}
-            tierKey={key}
-            highlighted={key === "standard"}
+            planKey={key}
+            highlighted={key === "pro"}
           />
         ))}
       </div>

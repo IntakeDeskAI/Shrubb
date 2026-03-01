@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import { ADDON_CONFIG, type AddonName } from '@landscape-ai/shared';
+import { getActiveCompany } from '@/lib/company';
+import { B2B_ADDONS, type B2BAddonName } from '@landscape-ai/shared';
 import { updateProfile } from './actions';
 
 // ---------------------------------------------------------------------------
@@ -12,10 +13,15 @@ interface Entitlements {
   included_rerenders: number;
   included_projects: number;
   included_voice_minutes: number;
+  included_proposals: number;
+  included_renders: number;
+  included_seats: number;
   chat_messages_used: number;
   rerenders_used: number;
   projects_used: number;
   voice_minutes_used: number;
+  proposals_used: number;
+  renders_used: number;
   spending_cap_cents: number;
   spending_used_cents: number;
 }
@@ -148,13 +154,13 @@ function PurchaseHistoryTable({ purchases }: { purchases: Purchase[] }) {
 }
 
 // ---------------------------------------------------------------------------
-// Add-on keys to display (skip voice packs for now)
+// Add-on keys to display
 // ---------------------------------------------------------------------------
 
-const VISIBLE_ADDONS: AddonName[] = [
+const VISIBLE_ADDONS: B2BAddonName[] = [
+  'proposal_pack',
+  'render_pack',
   'chat_pack',
-  'rerender_pack',
-  'second_project',
 ];
 
 // ---------------------------------------------------------------------------
@@ -168,21 +174,27 @@ export default async function SettingsPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return null; // Layout redirect handles this
+    return null;
   }
 
-  // Fetch data in parallel
+  const company = await getActiveCompany(supabase, user.id);
+
+  // Fetch data in parallel (company-scoped)
   const [entitlementsRes, purchasesRes, profileRes] = await Promise.all([
-    supabase
-      .from('entitlements')
-      .select('*')
-      .eq('user_id', user.id)
-      .single(),
-    supabase
-      .from('purchases')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false }),
+    company
+      ? supabase
+          .from('entitlements')
+          .select('*')
+          .eq('company_id', company.companyId)
+          .single()
+      : Promise.resolve({ data: null }),
+    company
+      ? supabase
+          .from('purchases')
+          .select('*')
+          .eq('company_id', company.companyId)
+          .order('created_at', { ascending: false })
+      : Promise.resolve({ data: [] }),
     supabase
       .from('profiles')
       .select('full_name, phone')
@@ -191,7 +203,7 @@ export default async function SettingsPage() {
   ]);
 
   const entitlements = entitlementsRes.data as Entitlements | null;
-  const purchases = (purchasesRes.data ?? []) as Purchase[];
+  const purchases = ((purchasesRes as { data: Purchase[] | null }).data ?? []) as Purchase[];
   const profile = profileRes.data as Profile | null;
 
   const hasEntitlements = entitlements && entitlements.tier !== 'none';
@@ -208,25 +220,32 @@ export default async function SettingsPage() {
 
         {hasEntitlements ? (
           <>
-            <p className="mt-2 text-2xl font-bold capitalize text-brand-600">
-              {entitlements.tier}
-            </p>
+            <div className="mt-2 flex items-center gap-3">
+              <p className="text-2xl font-bold capitalize text-brand-600">
+                {entitlements.tier}
+              </p>
+              {entitlements.tier === 'trial' && (
+                <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                  Trial
+                </span>
+              )}
+            </div>
 
             <div className="mt-6 space-y-4">
+              <UsageMeter
+                label="Proposals"
+                used={entitlements.proposals_used}
+                included={entitlements.included_proposals}
+              />
+              <UsageMeter
+                label="Renders"
+                used={entitlements.renders_used}
+                included={entitlements.included_renders}
+              />
               <UsageMeter
                 label="Chat Messages"
                 used={entitlements.chat_messages_used}
                 included={entitlements.included_chat_messages}
-              />
-              <UsageMeter
-                label="Rerenders"
-                used={entitlements.rerenders_used}
-                included={entitlements.included_rerenders}
-              />
-              <UsageMeter
-                label="Projects"
-                used={entitlements.projects_used}
-                included={entitlements.included_projects}
               />
               <UsageMeter
                 label="Voice Minutes"
@@ -237,12 +256,21 @@ export default async function SettingsPage() {
 
             <div className="mt-6 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Spending</span>
+                <span className="text-gray-600">AI Spending</span>
                 <span className="font-medium text-gray-900">
                   ${(entitlements.spending_used_cents / 100).toFixed(2)} / $
                   {(entitlements.spending_cap_cents / 100).toFixed(2)}
                 </span>
               </div>
+            </div>
+
+            <div className="mt-4 flex gap-3">
+              <a
+                href="/start"
+                className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+              >
+                {entitlements.tier === 'trial' ? 'Upgrade Plan' : 'Change Plan'}
+              </a>
             </div>
           </>
         ) : (
@@ -276,7 +304,7 @@ export default async function SettingsPage() {
               <AddonCard
                 key={key}
                 addonKey={key}
-                addon={ADDON_CONFIG[key]}
+                addon={B2B_ADDONS[key]}
               />
             ))}
           </div>
@@ -284,11 +312,11 @@ export default async function SettingsPage() {
       )}
 
       {/* ---------------------------------------------------------------- */}
-      {/* Section 3: Purchase History                                       */}
+      {/* Section 3: Billing History                                        */}
       {/* ---------------------------------------------------------------- */}
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900">
-          Purchase History
+          Billing History
         </h2>
         <div className="mt-4">
           <PurchaseHistoryTable purchases={purchases} />
@@ -296,7 +324,21 @@ export default async function SettingsPage() {
       </section>
 
       {/* ---------------------------------------------------------------- */}
-      {/* Section 4: Profile                                                */}
+      {/* Section 4: Company Info                                           */}
+      {/* ---------------------------------------------------------------- */}
+      {company && (
+        <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900">Company</h2>
+          <p className="mt-2 text-sm text-gray-700">
+            <span className="font-medium">{company.companyName}</span>
+            <span className="ml-2 text-gray-400">·</span>
+            <span className="ml-2 capitalize text-gray-500">{company.role}</span>
+          </p>
+        </section>
+      )}
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Section 5: Profile                                                */}
       {/* ---------------------------------------------------------------- */}
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900">Profile</h2>

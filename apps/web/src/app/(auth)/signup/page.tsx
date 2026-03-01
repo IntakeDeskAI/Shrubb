@@ -21,7 +21,7 @@ export default function SignupPage() {
     });
 
     if (error) {
-      redirect('/auth/signup?error=' + encodeURIComponent(error.message));
+      redirect('/signup?error=' + encodeURIComponent(error.message));
     }
 
     redirect('/app');
@@ -36,7 +36,7 @@ export default function SignupPage() {
           <nav className="hidden items-center gap-8 text-sm text-gray-500 sm:flex">
             <Link href="/#how-it-works" className="hover:text-gray-900">how it works</Link>
             <Link href="/#pricing" className="hover:text-gray-900">pricing</Link>
-            <Link href="/auth/login" className="rounded-full border border-gray-300 px-5 py-1.5 text-gray-700 hover:bg-gray-50">log in</Link>
+            <Link href="/login" className="rounded-full border border-gray-300 px-5 py-1.5 text-gray-700 hover:bg-gray-50">log in</Link>
           </nav>
         </div>
       </header>
@@ -92,7 +92,7 @@ export default function SignupPage() {
           <div className="mt-6 flex items-center justify-center gap-4 text-sm">
             <span className="text-gray-500">Already a member?</span>
             <Link
-              href="/auth/login"
+              href="/login"
               className="rounded-lg border border-gray-300 px-5 py-2 font-medium text-gray-700 hover:bg-gray-50"
             >
               Sign In

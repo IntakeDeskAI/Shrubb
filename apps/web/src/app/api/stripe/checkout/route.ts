@@ -1,8 +1,9 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { getActiveCompany } from '@/lib/company';
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
-import { TIER_CONFIG, ADDON_CONFIG, type TierName, type AddonName } from '@landscape-ai/shared';
+import { B2B_PLANS, B2B_ADDONS, type B2BPlanName, type B2BAddonName } from '@landscape-ai/shared';
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -18,6 +19,12 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Resolve company
+  const company = await getActiveCompany(supabase, user.id);
+  if (!company) {
+    return NextResponse.json({ error: 'No company. Complete onboarding first.' }, { status: 403 });
   }
 
   // Parse body - support both JSON and FormData
@@ -45,16 +52,20 @@ export async function POST(request: Request) {
   // Look up pricing
   let priceCents: number;
   let displayName: string;
+  let isSubscription = false;
+  let trialDays = 0;
 
-  if (productType === 'tier') {
-    const config = TIER_CONFIG[productName as TierName];
+  if (productType === 'plan') {
+    const config = B2B_PLANS[productName as B2BPlanName];
     if (!config) {
-      return NextResponse.json({ error: 'Invalid tier name' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid plan name' }, { status: 400 });
     }
     priceCents = config.price_cents;
     displayName = `Shrubb ${config.label} Plan`;
+    isSubscription = config.interval === 'month';
+    trialDays = 'trial_days' in config ? (config.trial_days as number) : 0;
   } else if (productType === 'addon') {
-    const config = ADDON_CONFIG[productName as AddonName];
+    const config = B2B_ADDONS[productName as B2BAddonName];
     if (!config) {
       return NextResponse.json({ error: 'Invalid addon name' }, { status: 400 });
     }
@@ -72,29 +83,35 @@ export async function POST(request: Request) {
   const protocol = headersList.get('x-forwarded-proto') ?? 'https';
   const origin = `${protocol}://${host}`;
 
-  // Try to find existing Stripe customer from previous purchases
-  const { data: prevPurchase } = await serviceClient
-    .from('purchases')
+  // Get or create Stripe customer for the company
+  const { data: companyRow } = await serviceClient
+    .from('companies')
     .select('stripe_customer_id')
-    .eq('user_id', user.id)
-    .not('stripe_customer_id', 'is', null)
-    .order('created_at', { ascending: false })
-    .limit(1)
+    .eq('id', company.companyId)
     .single();
 
-  let customerId = prevPurchase?.stripe_customer_id;
+  let customerId = companyRow?.stripe_customer_id;
 
   if (!customerId) {
     const customer = await stripe.customers.create({
       email: user.email,
-      metadata: { user_id: user.id },
+      name: company.companyName,
+      metadata: {
+        company_id: company.companyId,
+        user_id: user.id,
+      },
     });
     customerId = customer.id;
+
+    // Store customer ID on the company
+    await serviceClient
+      .from('companies')
+      .update({ stripe_customer_id: customerId })
+      .eq('id', company.companyId);
   }
 
-  const session = await stripe.checkout.sessions.create({
+  const sessionParams: Stripe.Checkout.SessionCreateParams = {
     customer: customerId,
-    mode: 'payment',
     line_items: [
       {
         price_data: {
@@ -103,18 +120,36 @@ export async function POST(request: Request) {
             name: displayName,
           },
           unit_amount: priceCents,
+          ...(isSubscription ? { recurring: { interval: 'month' } } : {}),
         },
         quantity: 1,
       },
     ],
+    mode: isSubscription ? 'subscription' : 'payment',
     success_url: `${origin}/start/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/start?canceled=true`,
     metadata: {
+      company_id: company.companyId,
       user_id: user.id,
       product_type: productType,
       product_name: productName,
     },
-  });
+    ...(isSubscription
+      ? {
+          subscription_data: {
+            metadata: {
+              company_id: company.companyId,
+              user_id: user.id,
+              product_type: productType,
+              product_name: productName,
+            },
+            ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
+          },
+        }
+      : {}),
+  };
+
+  const session = await stripe.checkout.sessions.create(sessionParams);
 
   // If this was a form submission, redirect directly
   if (!contentType.includes('application/json')) {

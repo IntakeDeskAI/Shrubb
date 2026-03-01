@@ -1,4 +1,5 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { getActiveCompany } from '@/lib/company';
 import { NextResponse } from 'next/server';
 
 const ALLOWED_BUCKETS = ['inputs'];
@@ -11,6 +12,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const company = await getActiveCompany(supabase, user.id);
+  if (!company) {
+    return NextResponse.json({ error: 'No company' }, { status: 403 });
+  }
+
   const { bucket, path } = await request.json();
 
   if (!ALLOWED_BUCKETS.includes(bucket)) {
@@ -21,8 +27,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
   }
 
-  // Ensure path starts with user's ID
-  if (!path.startsWith(`${user.id}/`)) {
+  // Ensure path starts with company ID (company-scoped storage)
+  if (!path.startsWith(`${company.companyId}/`)) {
     return NextResponse.json({ error: 'Invalid path prefix' }, { status: 403 });
   }
 

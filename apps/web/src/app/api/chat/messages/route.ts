@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { getActiveCompany } from '@/lib/company';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -9,6 +10,11 @@ export async function GET(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const company = await getActiveCompany(supabase, user.id);
+  if (!company) {
+    return NextResponse.json({ error: 'No company' }, { status: 403 });
   }
 
   // Parse search params
@@ -23,12 +29,12 @@ export async function GET(request: Request) {
     );
   }
 
-  // Verify user owns the project
+  // Verify project belongs to user's company
   const { data: project, error: projectError } = await supabase
     .from('projects')
     .select('id')
     .eq('id', projectId)
-    .eq('user_id', user.id)
+    .eq('company_id', company.companyId)
     .single();
 
   if (projectError || !project) {

@@ -19,6 +19,7 @@ export async function handleVisualizer(
   supabase: SupabaseClient,
   payload: Record<string, unknown>,
   userId: string,
+  companyId: string,
 ): Promise<Record<string, unknown>> {
   const designRunId = payload.design_run_id as string;
   const projectId = payload.project_id as string;
@@ -40,11 +41,11 @@ export async function handleVisualizer(
     throw new Error('No planner_json found on design_run — run planner first');
   }
 
-  // 2. Check spending cap
+  // 2. Check spending cap (company-scoped)
   const estimatedCostUsd = COST_PER_IMAGE_DALLE3_STANDARD * conceptCount;
   const estimatedCostCents = Math.ceil(estimatedCostUsd * 100);
 
-  const withinCap = await checkSpendingCap(supabase, userId, estimatedCostCents);
+  const withinCap = await checkSpendingCap(supabase, companyId, estimatedCostCents);
   if (!withinCap) {
     throw new Error('Spending cap exceeded. Please upgrade your plan or add funds.');
   }
@@ -96,9 +97,9 @@ Natural lighting, lush greenery, high detail. No text or labels.`;
     }
     const imageBuffer = Buffer.from(await imageRes.arrayBuffer());
 
-    // 4. Upload to storage
+    // 4. Upload to storage (company-scoped path)
     const fileId = crypto.randomUUID();
-    const storagePath = `${userId}/${projectId}/${fileId}.png`;
+    const storagePath = `${companyId}/${projectId}/${fileId}.png`;
 
     const { error: uploadErr } = await supabase.storage
       .from('concepts')
@@ -131,10 +132,11 @@ Natural lighting, lush greenery, high detail. No text or labels.`;
 
     assetIds.push(asset.id);
 
-    // 6. Track usage per image
+    // 6. Track usage per image (company-scoped)
     const imageCost = COST_PER_IMAGE_DALLE3_STANDARD;
     await trackUsage(supabase, {
       user_id: userId,
+      company_id: companyId,
       project_id: projectId,
       run_type: 'render',
       tokens_in: 0,
@@ -145,8 +147,8 @@ Natural lighting, lush greenery, high detail. No text or labels.`;
       model: DALLE_MODEL,
     });
 
-    // 7. Increment spending per image
-    await incrementSpending(supabase, userId, Math.ceil(imageCost * 100));
+    // 7. Increment spending per image (company-scoped)
+    await incrementSpending(supabase, companyId, Math.ceil(imageCost * 100));
   }
 
   console.log(
