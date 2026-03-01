@@ -9,6 +9,12 @@ interface AiProviderConfig {
   enabled: boolean;
 }
 
+interface CommProviderConfig {
+  provider: 'bland' | 'twilio';
+  enabled: boolean;
+  fields: Record<string, string>;
+}
+
 const DEFAULT_CONFIGS: AiProviderConfig[] = [
   { provider: 'openai', apiKey: '', model: 'gpt-4o', enabled: false },
   { provider: 'anthropic', apiKey: '', model: 'claude-sonnet-4-6', enabled: false },
@@ -19,8 +25,32 @@ const AVAILABLE_MODELS: Record<string, string[]> = {
   anthropic: ['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
 };
 
+const DEFAULT_COMM_CONFIGS: CommProviderConfig[] = [
+  {
+    provider: 'bland',
+    enabled: false,
+    fields: { apiKey: '', webhookSecret: '' },
+  },
+  {
+    provider: 'twilio',
+    enabled: false,
+    fields: { accountSid: '', authToken: '', webhookSecret: '', phoneNumber: '' },
+  },
+];
+
+const WEBHOOK_URLS = {
+  bland: 'https://shrubb.com/api/webhooks/bland',
+  twilio: {
+    sms: 'https://shrubb.com/api/webhooks/twilio',
+    smsAdvanced: 'https://shrubb.com/api/webhooks/twilio/sms',
+    voice: 'https://shrubb.com/api/webhooks/twilio/voice',
+    voiceStatus: 'https://shrubb.com/api/webhooks/twilio/voice-status',
+  },
+};
+
 export default function AiSettingsPage() {
   const [configs, setConfigs] = useState<AiProviderConfig[]>(DEFAULT_CONFIGS);
+  const [commConfigs, setCommConfigs] = useState<CommProviderConfig[]>(DEFAULT_COMM_CONFIGS);
   const [activeProvider, setActiveProvider] = useState<'openai' | 'anthropic'>('openai');
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
@@ -32,13 +62,29 @@ export default function AiSettingsPage() {
     );
   }
 
+  function updateCommConfig(provider: string, field: string, value: string) {
+    setCommConfigs((prev) =>
+      prev.map((c) =>
+        c.provider === provider
+          ? { ...c, fields: { ...c.fields, [field]: value } }
+          : c,
+      ),
+    );
+  }
+
+  function toggleCommProvider(provider: string, enabled: boolean) {
+    setCommConfigs((prev) =>
+      prev.map((c) => (c.provider === provider ? { ...c, enabled } : c)),
+    );
+  }
+
   async function handleSave() {
     setSaving(true);
     try {
       const res = await fetch('/api/admin/ai-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ configs, activeProvider }),
+        body: JSON.stringify({ configs, activeProvider, commConfigs }),
       });
       if (!res.ok) throw new Error('Failed to save');
       setTestResult('Settings saved successfully.');
@@ -176,6 +222,192 @@ export default function AiSettingsPage() {
           {testResult}
         </div>
       )}
+
+      {/* ═══════════ COMMUNICATION PROVIDERS ═══════════ */}
+      <div className="mt-10">
+        <h2 className="text-lg font-semibold text-gray-900">Communication Providers</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Configure Bland.ai (voice) and Twilio (SMS &amp; voice) for lead capture and automated responses.
+        </p>
+
+        <div className="mt-6 space-y-6">
+          {/* ── Bland.ai ── */}
+          {(() => {
+            const bland = commConfigs.find((c) => c.provider === 'bland')!;
+            return (
+              <div className={`rounded-lg border bg-white p-6 ${bland.enabled ? 'border-brand-200' : 'border-gray-200'}`}>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Bland.ai</h3>
+                  <label className="flex items-center gap-2 text-sm text-gray-600">
+                    <input
+                      type="checkbox"
+                      checked={bland.enabled}
+                      onChange={(e) => toggleCommProvider('bland', e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                    />
+                    Enabled
+                  </label>
+                </div>
+
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">API Key</label>
+                    <input
+                      type="password"
+                      value={bland.fields.apiKey}
+                      onChange={(e) => updateCommConfig('bland', 'apiKey', e.target.value)}
+                      placeholder="bland-..."
+                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Webhook Secret</label>
+                    <input
+                      type="password"
+                      value={bland.fields.webhookSecret}
+                      onChange={(e) => updateCommConfig('bland', 'webhookSecret', e.target.value)}
+                      placeholder="whsec_..."
+                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700">Webhook URL</label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <code className="block flex-1 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                      {WEBHOOK_URLS.bland}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(WEBHOOK_URLS.bland)}
+                      className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-400">Add this URL in your Bland.ai dashboard under webhook settings.</p>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* ── Twilio ── */}
+          {(() => {
+            const twilio = commConfigs.find((c) => c.provider === 'twilio')!;
+            return (
+              <div className={`rounded-lg border bg-white p-6 ${twilio.enabled ? 'border-brand-200' : 'border-gray-200'}`}>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Twilio</h3>
+                  <label className="flex items-center gap-2 text-sm text-gray-600">
+                    <input
+                      type="checkbox"
+                      checked={twilio.enabled}
+                      onChange={(e) => toggleCommProvider('twilio', e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                    />
+                    Enabled
+                  </label>
+                </div>
+
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Account SID</label>
+                    <input
+                      type="text"
+                      value={twilio.fields.accountSid}
+                      onChange={(e) => updateCommConfig('twilio', 'accountSid', e.target.value)}
+                      placeholder="AC..."
+                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Auth Token</label>
+                    <input
+                      type="password"
+                      value={twilio.fields.authToken}
+                      onChange={(e) => updateCommConfig('twilio', 'authToken', e.target.value)}
+                      placeholder="Auth token..."
+                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Webhook Secret</label>
+                    <input
+                      type="password"
+                      value={twilio.fields.webhookSecret}
+                      onChange={(e) => updateCommConfig('twilio', 'webhookSecret', e.target.value)}
+                      placeholder="Token for webhook verification..."
+                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                    <input
+                      type="text"
+                      value={twilio.fields.phoneNumber}
+                      onChange={(e) => updateCommConfig('twilio', 'phoneNumber', e.target.value)}
+                      placeholder="+1 (555) 123-4567"
+                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700">Webhook URLs</label>
+                  <div className="mt-2 space-y-2">
+                    {([
+                      ['SMS', WEBHOOK_URLS.twilio.sms],
+                      ['SMS (Advanced)', WEBHOOK_URLS.twilio.smsAdvanced],
+                      ['Voice', WEBHOOK_URLS.twilio.voice],
+                      ['Voice Status', WEBHOOK_URLS.twilio.voiceStatus],
+                    ] as const).map(([label, url]) => (
+                      <div key={label} className="flex items-center gap-2">
+                        <span className="w-28 shrink-0 text-xs font-medium text-gray-500">{label}</span>
+                        <code className="block flex-1 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs text-gray-600">
+                          {url}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => navigator.clipboard.writeText(url)}
+                          className="rounded border border-gray-200 px-2 py-1 text-[10px] font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs text-gray-400">Add these URLs in your Twilio phone number configuration.</p>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      </div>
+
+      {/* ═══════════ THIRD-PARTY API KEYS ═══════════ */}
+      <div className="mt-10">
+        <h2 className="text-lg font-semibold text-gray-900">Third-Party API Keys</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Keys for external services used across the app.
+        </p>
+        <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
+          <h3 className="text-base font-semibold text-gray-900">Google Maps / Places</h3>
+          <p className="mt-1 text-xs text-gray-500">Used for address autocomplete on client and project forms.</p>
+          <div className="mt-3">
+            <label className="block text-sm font-medium text-gray-700">API Key</label>
+            <input
+              type="password"
+              placeholder="AIza..."
+              className="mt-1 w-full max-w-md rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              Set as <code className="rounded bg-gray-100 px-1 py-0.5 text-[11px]">NEXT_PUBLIC_GOOGLE_PLACES_API_KEY</code> in your environment variables.
+              Enable the <strong>Places API (New)</strong> in Google Cloud Console.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Content generation config */}
       <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6">
