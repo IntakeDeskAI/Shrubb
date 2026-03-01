@@ -36,6 +36,7 @@ export default function HomePage() {
             <a href="#pricing" className="transition hover:text-gray-900">Pricing</a>
             <a href="#proof" className="transition hover:text-gray-900">Results</a>
             <a href="#faq" className="transition hover:text-gray-900">FAQ</a>
+            <Link href="/blog" className="transition hover:text-gray-900">Blog</Link>
             <Link href="/login" className="text-gray-700 hover:text-gray-900">Sign in</Link>
             <Link
               href="/signup"
@@ -670,8 +671,22 @@ export default function HomePage() {
             <a href="#how-it-works" className="hover:text-gray-600">How it works</a>
             <a href="#pricing" className="hover:text-gray-600">Pricing</a>
             <a href="#faq" className="hover:text-gray-600">FAQ</a>
+            <Link href="/blog" className="hover:text-gray-600">Blog</Link>
+            <Link href="/compare" className="hover:text-gray-600">Compare</Link>
             <Link href="/login" className="hover:text-gray-600">Sign in</Link>
           </nav>
+          <div className="mt-3 flex flex-wrap justify-center gap-3 text-[11px] text-gray-300 sm:mt-2 sm:gap-4 sm:text-xs">
+            <Link href="/landscaping/austin" className="hover:text-gray-500">Austin</Link>
+            <Link href="/landscaping/dallas" className="hover:text-gray-500">Dallas</Link>
+            <Link href="/landscaping/atlanta" className="hover:text-gray-500">Atlanta</Link>
+            <Link href="/landscaping/denver" className="hover:text-gray-500">Denver</Link>
+            <Link href="/landscaping/portland" className="hover:text-gray-500">Portland</Link>
+            <Link href="/landscaping/phoenix" className="hover:text-gray-500">Phoenix</Link>
+            <Link href="/landscaping/tampa" className="hover:text-gray-500">Tampa</Link>
+            <Link href="/landscaping/nashville" className="hover:text-gray-500">Nashville</Link>
+            <Link href="/landscaping/charlotte" className="hover:text-gray-500">Charlotte</Link>
+            <Link href="/landscaping/raleigh" className="hover:text-gray-500">Raleigh</Link>
+          </div>
           <p className="text-[11px] text-gray-400 sm:text-xs">&copy; {new Date().getFullYear()} Shrubb. All rights reserved.</p>
         </div>
       </footer>
