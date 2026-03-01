@@ -3,10 +3,29 @@ import { ShrubbLogo } from '@/components/shrubb-logo';
 import PricingTable from '@/components/landing/pricing-table';
 import FaqAccordion from '@/components/landing/faq-accordion';
 import BeforeAfterSlider from '@/components/landing/before-after-slider';
+import {
+  OrganizationSchema,
+  SoftwareApplicationSchema,
+  FaqPageSchema,
+} from '@/components/seo/json-ld';
+
+const HOME_FAQ_ITEMS = [
+  { question: 'How does the free trial work?', answer: 'Sign up and create your company — no credit card needed. You get 7 days with 3 proposals, 6 renders, and 15 chat messages. When the trial ends, pick a plan that fits your team.' },
+  { question: 'What do my clients see?', answer: 'Clients receive an email with a link to a branded, hosted proposal page. They can view the renders, plant list, and layout — then click Accept right from the page. You see when they view and accept.' },
+  { question: 'What inputs do I need to create a proposal?', answer: 'Upload a few photos of the property or enter an address (we pull satellite imagery). Then fill out a short questionnaire about style, budget, climate zone, and plant preferences. The AI handles the rest.' },
+  { question: 'How accurate are the designs?', answer: 'Designs use real plant species suited to the client USDA zone, with accurate sizing and spacing. Renders are photorealistic enough to impress clients, though we recommend a site survey before major construction.' },
+  { question: 'Can my whole team use Shrubb?', answer: 'Yes — each plan includes multiple seats. Starter includes 3 users, Pro includes 8, and Growth includes 15. All team members share the company proposal and render credits.' },
+  { question: 'What happens if I run out of proposals or renders?', answer: 'You can purchase add-on packs anytime from Settings. A Proposal Pack adds 20 proposals for $79, and a Render Pack adds 25 renders for $59. Credits are added instantly.' },
+  { question: 'Can I customize proposals with my branding?', answer: 'Your company name appears on all proposal pages and emails sent to clients. Full brand kit customization (logo, colors, templates) is available on Pro and Growth plans.' },
+  { question: 'Can I cancel anytime?', answer: 'Yes — cancel from your Settings page at any time. Your plan stays active through the end of the billing period. No long-term contracts or cancellation fees.' },
+];
 
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col bg-white">
+      <OrganizationSchema />
+      <SoftwareApplicationSchema />
+      <FaqPageSchema items={HOME_FAQ_ITEMS} />
       {/* ═══════════ NAV ═══════════ */}
       <header className="fixed top-0 z-50 w-full border-b border-gray-100 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
