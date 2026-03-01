@@ -536,6 +536,8 @@ export interface Database {
           lead_id: string;
           phone_number_id: string;
           channel: string;
+          first_inbound_at: string | null;
+          first_response_at: string | null;
           updated_at: string;
           created_at: string;
         };
@@ -545,8 +547,12 @@ export interface Database {
           lead_id: string;
           phone_number_id: string;
           channel?: string;
+          first_inbound_at?: string | null;
+          first_response_at?: string | null;
         };
         Update: {
+          first_inbound_at?: string | null;
+          first_response_at?: string | null;
           updated_at?: string;
         };
       };
@@ -614,6 +620,9 @@ export interface Database {
           business_hours_start: string;
           business_hours_end: string;
           business_hours_timezone: string;
+          auto_nudge_enabled: boolean;
+          nudge_delay_hours: number;
+          nudge_max_count: number;
           created_at: string;
           updated_at: string;
         };
@@ -627,6 +636,9 @@ export interface Database {
           business_hours_start?: string;
           business_hours_end?: string;
           business_hours_timezone?: string;
+          auto_nudge_enabled?: boolean;
+          nudge_delay_hours?: number;
+          nudge_max_count?: number;
         };
         Update: {
           ai_sms_enabled?: boolean;
@@ -636,7 +648,35 @@ export interface Database {
           business_hours_start?: string;
           business_hours_end?: string;
           business_hours_timezone?: string;
+          auto_nudge_enabled?: boolean;
+          nudge_delay_hours?: number;
+          nudge_max_count?: number;
           updated_at?: string;
+        };
+      };
+      proposal_nudges: {
+        Row: {
+          id: string;
+          proposal_id: string;
+          company_id: string;
+          nudge_number: number;
+          scheduled_at: string;
+          sent_at: string | null;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          proposal_id: string;
+          company_id: string;
+          nudge_number?: number;
+          scheduled_at: string;
+          sent_at?: string | null;
+          status?: string;
+        };
+        Update: {
+          sent_at?: string | null;
+          status?: string;
         };
       };
       jobs: {

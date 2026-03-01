@@ -161,6 +161,7 @@ export async function POST(request: Request) {
     }
 
     // Get or create voice conversation
+    const voiceNow = new Date().toISOString();
     const { data: existingConvo } = await supabase
       .from('conversations')
       .select('id')
@@ -181,6 +182,7 @@ export async function POST(request: Request) {
           lead_id: leadId,
           phone_number_id: phoneNumberId,
           channel: 'voice',
+          first_inbound_at: voiceNow,
         })
         .select('id')
         .single();
@@ -196,6 +198,13 @@ export async function POST(request: Request) {
         provider_call_id: callSid,
         status: 'in-progress',
       });
+
+      // Track first response (AI answers immediately on turn 0)
+      await supabase
+        .from('conversations')
+        .update({ first_response_at: voiceNow })
+        .eq('id', conversationId)
+        .is('first_response_at', null);
 
       const webhookUrl = `${url.origin}/api/webhooks/twilio/voice?token=${token}&turn=1`;
 

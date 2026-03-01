@@ -185,21 +185,29 @@ export async function POST(request: Request) {
     // 6. Create or reuse conversation
     const { data: existingConvo } = await supabase
       .from('conversations')
-      .select('id')
+      .select('id, first_inbound_at, first_response_at')
       .eq('account_id', accountId)
       .eq('lead_id', leadId)
       .eq('phone_number_id', phoneNumberId)
       .eq('channel', 'sms')
       .maybeSingle();
 
+    const now = new Date().toISOString();
     let conversationId: string;
+    let isNewConversation = false;
     if (existingConvo) {
       conversationId = existingConvo.id;
+      // Set first_inbound_at if not already set
+      const updateData: Record<string, unknown> = { updated_at: now };
+      if (!existingConvo.first_inbound_at) {
+        updateData.first_inbound_at = now;
+      }
       await supabase
         .from('conversations')
-        .update({ updated_at: new Date().toISOString() })
+        .update(updateData)
         .eq('id', conversationId);
     } else {
+      isNewConversation = true;
       const { data: newConvo, error: convoError } = await supabase
         .from('conversations')
         .insert({
@@ -207,6 +215,7 @@ export async function POST(request: Request) {
           lead_id: leadId,
           phone_number_id: phoneNumberId,
           channel: 'sms',
+          first_inbound_at: now,
         })
         .select('id')
         .single();
@@ -355,6 +364,16 @@ export async function POST(request: Request) {
       body: aiReply,
       provider_id: outboundSid,
     });
+
+    // 12. Track first response time
+    const needsResponseTracking = isNewConversation || !existingConvo?.first_response_at;
+    if (needsResponseTracking) {
+      await supabase
+        .from('conversations')
+        .update({ first_response_at: new Date().toISOString() })
+        .eq('id', conversationId)
+        .is('first_response_at', null);
+    }
 
     console.log(`[sms-webhook] Processed SMS from ${from} to account ${accountId}`);
 

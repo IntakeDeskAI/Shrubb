@@ -54,6 +54,9 @@ interface CompanySettingsRow {
   business_hours_start: string;
   business_hours_end: string;
   business_hours_timezone: string;
+  auto_nudge_enabled: boolean;
+  nudge_delay_hours: number;
+  nudge_max_count: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -515,6 +518,62 @@ export default async function SettingsPage() {
                     <option value="America/Anchorage">Alaska</option>
                     <option value="Pacific/Honolulu">Hawaii</option>
                   </select>
+                </div>
+              </div>
+
+              <div className="mt-2 border-t border-gray-100 pt-4">
+                <h3 className="text-sm font-semibold text-gray-900">Proposal Auto-Nudge</h3>
+                <p className="mt-0.5 text-xs text-gray-400">
+                  Automatically text clients who viewed a proposal but haven&apos;t responded.
+                </p>
+
+                <div className="mt-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Enable auto-nudge follow-ups</p>
+                    <p className="text-xs text-gray-400">Send SMS reminders for viewed proposals</p>
+                  </div>
+                  <label className="relative inline-flex cursor-pointer items-center">
+                    <input
+                      type="checkbox"
+                      name="auto_nudge_enabled"
+                      value="true"
+                      defaultChecked={aiSettings.auto_nudge_enabled}
+                      className="peer sr-only"
+                    />
+                    <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-brand-500 peer-checked:after:translate-x-full" />
+                  </label>
+                </div>
+
+                <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="nudge_delay" className="block text-sm font-medium text-gray-700">
+                      Delay before first nudge (hours)
+                    </label>
+                    <input
+                      id="nudge_delay"
+                      name="nudge_delay_hours"
+                      type="number"
+                      min={12}
+                      max={168}
+                      defaultValue={aiSettings.nudge_delay_hours}
+                      className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="nudge_max" className="block text-sm font-medium text-gray-700">
+                      Max follow-ups per proposal
+                    </label>
+                    <select
+                      id="nudge_max"
+                      name="nudge_max_count"
+                      defaultValue={aiSettings.nudge_max_count}
+                      className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                    >
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 

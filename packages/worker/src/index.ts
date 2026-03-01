@@ -7,6 +7,7 @@ import { handleSatelliteFetch } from './handlers/satellite-fetch.js';
 import { handlePdfGeneration } from './handlers/pdf-generation.js';
 import { handleChatResponse } from './handlers/chat-response.js';
 import { handleProvisionPhone } from './handlers/provision-phone.js';
+import { handleSendProposalNudge } from './handlers/send-proposal-nudge.js';
 
 const POLL_INTERVAL = parseInt(process.env.JOB_POLL_INTERVAL_MS ?? '3000', 10);
 const WORKER_ID = process.env.WORKER_ID ?? `worker-${crypto.randomUUID().slice(0, 8)}`;
@@ -33,6 +34,7 @@ const handlers: Record<string, JobHandler> = {
   pdf_generation: handlePdfGeneration,
   chat_response: handleChatResponse,
   provision_phone: handleProvisionPhone,
+  send_proposal_nudge: handleSendProposalNudge,
 };
 
 interface JobRow {
@@ -167,11 +169,74 @@ async function pollAndProcess(): Promise<void> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Check for due proposal nudges and queue jobs for them
+// ---------------------------------------------------------------------------
+let lastNudgeCheck = 0;
+const NUDGE_CHECK_INTERVAL = 60_000; // Check every 60 seconds
+
+async function checkPendingNudges(): Promise<void> {
+  const now = Date.now();
+  if (now - lastNudgeCheck < NUDGE_CHECK_INTERVAL) return;
+  lastNudgeCheck = now;
+
+  try {
+    const { data: dueNudges } = await supabase
+      .from('proposal_nudges')
+      .select('id, proposal_id, company_id')
+      .eq('status', 'pending')
+      .lte('scheduled_at', new Date().toISOString())
+      .limit(10);
+
+    if (!dueNudges || dueNudges.length === 0) return;
+
+    for (const nudge of dueNudges) {
+      // Find a user_id from company_members for the job
+      const { data: member } = await supabase
+        .from('company_members')
+        .select('user_id')
+        .eq('company_id', nudge.company_id)
+        .limit(1)
+        .maybeSingle();
+
+      if (!member) continue;
+
+      // Check if job already exists for this nudge
+      const { data: existingJob } = await supabase
+        .from('jobs')
+        .select('id')
+        .eq('type', 'send_proposal_nudge')
+        .contains('payload', { nudge_id: nudge.id } as never)
+        .in('status', ['queued', 'running'])
+        .maybeSingle();
+
+      if (existingJob) continue;
+
+      await supabase.from('jobs').insert({
+        user_id: member.user_id,
+        company_id: nudge.company_id,
+        type: 'send_proposal_nudge',
+        status: 'queued',
+        payload: {
+          nudge_id: nudge.id,
+          proposal_id: nudge.proposal_id,
+          company_id: nudge.company_id,
+        },
+      });
+
+      console.log(`[${WORKER_ID}] Queued nudge job for nudge ${nudge.id}`);
+    }
+  } catch (err) {
+    console.error('Nudge check error:', err);
+  }
+}
+
 async function main() {
   console.log(`[${WORKER_ID}] Worker starting, polling every ${POLL_INTERVAL}ms`);
 
   while (true) {
     await pollAndProcess();
+    await checkPendingNudges();
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
   }
 }

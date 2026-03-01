@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getActiveCompany } from '@/lib/company';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { updateClient } from '../actions';
+import { updateClient, createProposalFromConversation } from '../actions';
 import { createProposal } from '../../proposals/actions';
 
 interface ClientDetailProps {
@@ -15,9 +15,11 @@ interface ClientDetailProps {
 
 async function ConversationHistory({
   companyId,
+  clientId,
   clientPhone,
 }: {
   companyId: string;
+  clientId: string;
   clientPhone: string | null;
 }) {
   if (!clientPhone) return null;
@@ -37,7 +39,7 @@ async function ConversationHistory({
   // Find conversations for this lead
   const { data: conversations } = await supabase
     .from('conversations')
-    .select('id, channel, updated_at')
+    .select('id, channel, updated_at, first_inbound_at, first_response_at')
     .eq('account_id', companyId)
     .eq('lead_id', lead.id)
     .order('updated_at', { ascending: false })
@@ -65,9 +67,30 @@ async function ConversationHistory({
 
   const lastContact = conversations[0]?.updated_at;
 
+  // Calculate response time for the most recent conversation
+  const latestConvo = conversations[0];
+  let responseTimeLabel: string | null = null;
+  if (latestConvo?.first_inbound_at && latestConvo?.first_response_at) {
+    const diffMs = new Date(latestConvo.first_response_at).getTime() - new Date(latestConvo.first_inbound_at).getTime();
+    const diffSec = Math.round(diffMs / 1000);
+    if (diffSec < 60) responseTimeLabel = `${diffSec}s`;
+    else if (diffSec < 3600) responseTimeLabel = `${Math.round(diffSec / 60)}m`;
+    else responseTimeLabel = `${Math.round(diffSec / 3600)}h`;
+  }
+
+  // Find the primary conversation for proposal generation (most recent with messages)
+  const primaryConvoId = conversations[0]?.id;
+
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-gray-900">AI Communication</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900">AI Communication</h2>
+        {responseTimeLabel && (
+          <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700">
+            Response: {responseTimeLabel}
+          </span>
+        )}
+      </div>
       {lastContact && (
         <p className="mt-1 text-xs text-gray-400">
           Last contact: {new Date(lastContact).toLocaleDateString()} at{' '}
@@ -120,18 +143,24 @@ async function ConversationHistory({
         </div>
       )}
 
-      {/* Generate proposal button */}
-      <div className="mt-4 border-t border-gray-100 pt-4">
-        <Link
-          href={`/app/new-project?client_phone=${encodeURIComponent(clientPhone)}`}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-50 px-4 py-2 text-sm font-medium text-brand-700 transition hover:bg-brand-100"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-          </svg>
-          Generate proposal from conversation
-        </Link>
-      </div>
+      {/* Generate proposal from conversation */}
+      {primaryConvoId && (
+        <div className="mt-4 border-t border-gray-100 pt-4">
+          <form action={createProposalFromConversation}>
+            <input type="hidden" name="conversation_id" value={primaryConvoId} />
+            <input type="hidden" name="client_id" value={clientId} />
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-50 px-4 py-2 text-sm font-medium text-brand-700 transition hover:bg-brand-100"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              Generate proposal from conversation
+            </button>
+          </form>
+        </div>
+      )}
     </section>
   );
 }
@@ -287,7 +316,7 @@ export default async function ClientDetailPage({ params }: ClientDetailProps) {
       </section>
 
       {/* AI Communication History */}
-      <ConversationHistory companyId={company.companyId} clientPhone={client.phone} />
+      <ConversationHistory companyId={company.companyId} clientId={client.id} clientPhone={client.phone} />
 
       {/* Create proposal for this client */}
       {projects && projects.length > 0 && (
