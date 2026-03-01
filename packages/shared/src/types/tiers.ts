@@ -115,7 +115,7 @@ export const B2B_PRICING_COMPARISON: B2BPricingFeature[] = [
   { label: 'Proposals/month', starter: '15', pro: '50', growth: '120' },
   { label: 'Chat messages/month', starter: '30', pro: '120', growth: '300' },
   { label: 'Renders/month', starter: '10', pro: '40', growth: '100' },
-  { label: 'Proposal templates', starter: '1', pro: true, growth: true },
+  { label: 'Proposal templates', starter: '1', pro: '5', growth: 'Unlimited' },
   { label: 'Brand kit', starter: false, pro: true, growth: true },
   { label: 'Client records', starter: false, pro: true, growth: true },
   { label: 'Priority queue', starter: false, pro: true, growth: true },

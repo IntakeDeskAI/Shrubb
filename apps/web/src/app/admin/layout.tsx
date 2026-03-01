@@ -56,6 +56,18 @@ export default async function AdminLayout({
           >
             Jobs
           </Link>
+          <Link
+            href="/admin/content"
+            className="block rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            Content
+          </Link>
+          <Link
+            href="/admin/settings"
+            className="block rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            AI Settings
+          </Link>
         </nav>
         <div className="mt-auto pt-8">
           <Link

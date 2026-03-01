@@ -106,7 +106,7 @@ function PlanCard({
             : "bg-gray-50 text-gray-900 ring-1 ring-inset ring-gray-200 hover:bg-gray-100"
         }`}
       >
-        Start free trial
+        Start landscaper trial
       </Link>
     </div>
   );
