@@ -2,8 +2,17 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { ShrubbLogo } from '@/components/shrubb-logo';
+import { SubmitButton } from './submit-button';
 
-export default function LoginPage() {
+interface LoginPageProps {
+  searchParams: Promise<{ error?: string; redirect?: string }>;
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+  const errorMessage = params.error;
+  const redirectTo = params.redirect;
+
   async function login(formData: FormData) {
     'use server';
 
@@ -18,6 +27,7 @@ export default function LoginPage() {
 
     if (error) {
       redirect('/login?error=' + encodeURIComponent(error.message));
+      return;
     }
 
     redirect('/app');
@@ -30,9 +40,15 @@ export default function LoginPage() {
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <ShrubbLogo size="default" color="green" />
           <nav className="hidden items-center gap-8 text-sm text-gray-500 sm:flex">
-            <Link href="/#how-it-works" className="hover:text-gray-900">how it works</Link>
-            <Link href="/#pricing" className="hover:text-gray-900">pricing</Link>
-            <span className="rounded-full border border-brand-500 px-5 py-1.5 text-brand-600 font-medium">log in</span>
+            <Link href="/#how-it-works" className="hover:text-gray-900">
+              how it works
+            </Link>
+            <Link href="/#pricing" className="hover:text-gray-900">
+              pricing
+            </Link>
+            <span className="rounded-full border border-brand-500 px-5 py-1.5 font-medium text-brand-600">
+              log in
+            </span>
           </nav>
         </div>
       </header>
@@ -41,11 +57,26 @@ export default function LoginPage() {
       <div className="h-1 bg-gradient-to-r from-brand-400 via-brand-500 to-brand-400" />
 
       {/* Content */}
-      <main className="flex flex-1 items-start justify-center px-4 pt-16 pb-24">
+      <main className="flex flex-1 items-start justify-center px-4 pb-24 pt-16">
         <div className="w-full max-w-sm">
           <h1 className="mb-8 text-center text-2xl font-bold text-gray-900">
             Sign In
           </h1>
+
+          {/* Error message */}
+          {errorMessage && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {errorMessage}
+            </div>
+          )}
+
+          {/* Redirect notice */}
+          {redirectTo && !errorMessage && (
+            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+              Please sign in to continue.
+            </div>
+          )}
+
           <form action={login} className="space-y-4">
             <div>
               <input
@@ -69,17 +100,17 @@ export default function LoginPage() {
             </div>
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 text-gray-600">
-                <input type="checkbox" className="rounded border-gray-300 text-brand-500 focus:ring-brand-500" />
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                />
                 Keep me signed in
               </label>
-              <a href="#" className="font-medium text-gray-900 underline">Forgot Password</a>
+              <a href="#" className="font-medium text-gray-900 underline">
+                Forgot Password
+              </a>
             </div>
-            <button
-              type="submit"
-              className="w-full rounded-lg bg-gradient-to-r from-brand-400 to-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-brand-500 hover:to-brand-600"
-            >
-              Sign In
-            </button>
+            <SubmitButton>Sign In</SubmitButton>
           </form>
           <div className="mt-6 flex items-center justify-center gap-4 text-sm">
             <span className="text-gray-500">Not a member yet?</span>
