@@ -56,7 +56,7 @@ function PlanCard({
 
   return (
     <div
-      className={`relative flex flex-col rounded-2xl border p-8 ${
+      className={`relative flex flex-col rounded-2xl border p-5 sm:p-8 ${
         highlighted
           ? "border-brand-500 shadow-xl ring-2 ring-brand-500"
           : "border-gray-200 shadow-sm"
@@ -71,7 +71,7 @@ function PlanCard({
       <h3 className="text-lg font-semibold text-gray-900">{plan.label}</h3>
 
       <p className="mt-4 flex items-baseline gap-1">
-        <span className="text-4xl font-bold tracking-tight text-gray-900">
+        <span className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
           {formatPrice(plan.price_cents)}
         </span>
         <span className="text-sm text-gray-500">/month</span>
@@ -79,7 +79,7 @@ function PlanCard({
 
       <ul className="mt-8 flex-1 space-y-3">
         {plan.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-3 text-sm text-gray-700">
+          <li key={feature} className="flex items-start gap-3 text-xs text-gray-700 sm:text-sm">
             <svg
               className="mt-0.5 h-4 w-4 shrink-0 text-brand-500"
               fill="none"
@@ -100,7 +100,7 @@ function PlanCard({
 
       <Link
         href={`/start?plan=${planKey}`}
-        className={`mt-8 block rounded-lg px-4 py-3 text-center text-sm font-semibold transition ${
+        className={`mt-8 block rounded-lg px-4 py-2.5 text-center text-sm font-semibold transition sm:py-3 ${
           highlighted
             ? "bg-brand-500 text-white hover:bg-brand-600"
             : "bg-gray-50 text-gray-900 ring-1 ring-inset ring-gray-200 hover:bg-gray-100"
@@ -118,7 +118,8 @@ function ComparisonTable() {
       <h3 className="mb-6 text-center text-xl font-semibold text-gray-900">
         Compare plans
       </h3>
-      <table className="mx-auto w-full max-w-3xl text-left">
+      <p className="mb-2 text-center text-[11px] text-gray-400 sm:hidden">Swipe to compare &rarr;</p>
+      <table className="mx-auto w-full max-w-3xl text-left text-xs sm:text-sm">
         <thead>
           <tr className="border-b border-gray-200">
             <th className="py-3 pr-4 text-sm font-medium text-gray-500">
@@ -164,8 +165,11 @@ export default function PricingTable() {
       <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-gray-600">
         Start with a free trial. If you close one extra $3,000 job a month, Shrubb pays for itself.
       </p>
+      <p className="mx-auto mt-3 w-fit rounded-full bg-brand-50 px-4 py-1.5 text-center text-xs font-semibold text-brand-700 ring-1 ring-brand-200">
+        Most landscapers start with Pro
+      </p>
 
-      <div className="mt-12 grid gap-8 md:grid-cols-3">
+      <div className="mt-12 grid gap-4 sm:gap-8 md:grid-cols-3">
         {PLAN_ORDER.map((key) => (
           <PlanCard
             key={key}

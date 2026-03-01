@@ -27,14 +27,15 @@ export default function BlogIndexPage() {
               href="/signup"
               className="rounded-lg bg-brand-500 px-4 py-2 font-semibold text-white transition hover:bg-brand-600"
             >
-              Start free trial
+              <span className="sm:hidden">Try free</span>
+              <span className="hidden sm:inline">Start landscaper trial</span>
             </Link>
           </nav>
         </div>
       </header>
 
       {/* ── Header ── */}
-      <section className="border-b border-gray-100 bg-gradient-to-b from-brand-50 to-white px-6 py-16">
+      <section className="border-b border-gray-100 bg-gradient-to-b from-brand-50 to-white px-6 py-10 sm:py-16">
         <div className="mx-auto max-w-4xl text-center">
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
             Shrubb Blog
@@ -46,12 +47,12 @@ export default function BlogIndexPage() {
       </section>
 
       {/* ── Post Grid ── */}
-      <section className="px-6 py-16">
-        <div className="mx-auto grid max-w-7xl gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="px-4 py-16 sm:px-6">
+        <div className="mx-auto grid max-w-7xl gap-4 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => (
             <article
               key={post.slug}
-              className="group flex flex-col rounded-xl border border-gray-200 bg-white p-6 transition hover:border-brand-200 hover:shadow-md"
+              className="group flex flex-col rounded-xl border border-gray-200 bg-white p-4 sm:p-6 transition hover:border-brand-200 hover:shadow-md"
             >
               {/* Category badge */}
               <span className="mb-3 inline-block w-fit rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
@@ -59,7 +60,7 @@ export default function BlogIndexPage() {
               </span>
 
               {/* Title */}
-              <h2 className="text-lg font-bold text-gray-900 group-hover:text-brand-600">
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-brand-600">
                 <Link href={`/blog/${post.slug}`} className="hover:underline">
                   {post.title}
                 </Link>
@@ -92,7 +93,7 @@ export default function BlogIndexPage() {
       <footer className="border-t border-gray-100 bg-white px-6 py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
           <span className="text-sm font-light tracking-wide text-gray-900">shrubb</span>
-          <nav className="flex gap-6 text-sm text-gray-400">
+          <nav className="flex flex-wrap gap-6 text-xs sm:text-sm text-gray-400">
             <Link href="/" className="hover:text-gray-600">
               Home
             </Link>

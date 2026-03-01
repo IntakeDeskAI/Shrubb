@@ -56,17 +56,18 @@ export default async function CityLandingPage({
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <ShrubbLogo size="default" color="green" />
           <nav className="flex items-center gap-6 text-sm text-gray-500">
-            <Link href="/" className="transition hover:text-gray-900">
+            <Link href="/" className="hidden transition hover:text-gray-900 sm:flex">
               Home
             </Link>
-            <Link href="/blog" className="transition hover:text-gray-900">
+            <Link href="/blog" className="hidden transition hover:text-gray-900 sm:flex">
               Blog
             </Link>
             <Link
               href="/signup"
               className="rounded-lg bg-brand-500 px-5 py-2 font-semibold text-white shadow-sm transition hover:bg-brand-600"
             >
-              Start free trial
+              <span className="sm:hidden">Try free</span>
+              <span className="hidden sm:inline">Start landscaper trial</span>
             </Link>
           </nav>
         </div>
@@ -89,20 +90,20 @@ export default async function CityLandingPage({
         {/* ================================================================= */}
         {/* HERO                                                              */}
         {/* ================================================================= */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-brand-50 via-white to-white px-6 pt-12 pb-20">
+        <section className="relative overflow-hidden bg-gradient-to-b from-brand-50 via-white to-white px-4 pt-20 pb-8 sm:px-6 sm:pt-12 sm:pb-20">
           <div className="pointer-events-none absolute top-0 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-brand-100/40 blur-3xl" />
           <div className="relative z-10 mx-auto max-w-3xl text-center">
             <span className="inline-block rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-semibold text-brand-700">
               USDA Zone {city.usdaZone} &middot; {city.city},{" "}
               {city.stateCode}
             </span>
-            <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+            <h1 className="mt-6 text-[26px] font-extrabold tracking-tight text-gray-900 sm:text-5xl">
               AI Proposals for Landscapers in{" "}
               <span className="text-brand-600">
                 {city.city}, {city.stateCode}
               </span>
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
+            <p className="mx-auto mt-6 max-w-2xl text-[14px] leading-relaxed text-gray-700 sm:text-lg">
               With a population of {city.population} and a landscaping season
               that runs {city.landscapingSeasonDesc}, {city.city} is a
               thriving market for landscaping professionals. Shrubb helps you
@@ -110,6 +111,9 @@ export default async function CityLandingPage({
               Zone {city.usdaZone} — complete with photorealistic renders,
               zone-accurate plant lists, and one-click client acceptance.
             </p>
+            <div className="mx-auto mt-6 max-w-xl rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-left text-[13px] text-brand-800 sm:text-sm">
+              <span className="font-bold">Pro tip:</span> Mention the client&apos;s USDA zone in your proposal — it builds instant credibility.
+            </div>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
                 href="/signup"
@@ -131,7 +135,7 @@ export default async function CityLandingPage({
         {/* ================================================================= */}
         {/* LOCAL MARKET SECTION                                              */}
         {/* ================================================================= */}
-        <section className="border-t border-gray-100 bg-gray-50 px-6 py-16">
+        <section className="border-t border-gray-100 bg-gray-50 px-4 py-10 sm:px-6 sm:py-16">
           <div className="mx-auto max-w-5xl">
             <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">
               The {city.city} Landscaping Market
@@ -140,9 +144,9 @@ export default async function CityLandingPage({
               {city.marketInsight}
             </p>
 
-            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
               {/* USDA Zone */}
-              <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 text-center sm:p-6">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
                   <LeafIcon className="h-6 w-6 text-brand-600" />
                 </div>
@@ -155,7 +159,7 @@ export default async function CityLandingPage({
               </div>
 
               {/* Season */}
-              <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 text-center sm:p-6">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
                   <CalendarIcon className="h-6 w-6 text-brand-600" />
                 </div>
@@ -168,7 +172,7 @@ export default async function CityLandingPage({
               </div>
 
               {/* Average project size */}
-              <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 text-center sm:p-6">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
                   <DollarIcon className="h-6 w-6 text-brand-600" />
                 </div>
@@ -181,7 +185,7 @@ export default async function CityLandingPage({
               </div>
 
               {/* Population */}
-              <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 text-center sm:p-6">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
                   <UsersIcon className="h-6 w-6 text-brand-600" />
                 </div>
@@ -216,7 +220,7 @@ export default async function CityLandingPage({
         {/* ================================================================= */}
         {/* TOP PLANTS                                                        */}
         {/* ================================================================= */}
-        <section className="px-6 py-16">
+        <section className="px-4 py-10 sm:px-6 sm:py-16">
           <div className="mx-auto max-w-5xl">
             <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">
               Top Plants for Zone {city.usdaZone} in {city.city}
@@ -226,7 +230,7 @@ export default async function CityLandingPage({
               appropriate species in every proposal. Here are some of the most
               popular plants {city.city} landscapers include in their projects.
             </p>
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid gap-3 sm:mt-10 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {city.topPlants.map((plant, i) => {
                 const [commonName, scientificName] = plant.includes("(")
                   ? [
@@ -238,7 +242,7 @@ export default async function CityLandingPage({
                 return (
                   <div
                     key={plant}
-                    className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 transition hover:shadow-md"
+                    className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 transition hover:shadow-md sm:gap-4 sm:p-5"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-sm font-bold text-brand-600">
                       {i + 1}
@@ -257,7 +261,7 @@ export default async function CityLandingPage({
                 );
               })}
               {/* Bonus card — Shrubb pitch */}
-              <div className="flex items-start gap-4 rounded-xl border border-brand-200 bg-brand-50 p-5">
+              <div className="flex items-start gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4 sm:gap-4 sm:p-5">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-sm font-bold text-brand-700">
                   +
                 </div>
@@ -278,27 +282,27 @@ export default async function CityLandingPage({
         {/* ================================================================= */}
         {/* HOW SHRUBB HELPS                                                  */}
         {/* ================================================================= */}
-        <section className="border-t border-gray-100 bg-gray-50 px-6 py-16">
+        <section className="border-t border-gray-100 bg-gray-50 px-4 py-10 sm:px-6 sm:py-16">
           <div className="mx-auto max-w-5xl">
             <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">
               How Shrubb Helps {city.city} Landscapers Win More Jobs
             </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-center text-gray-600">
+            <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-gray-600 sm:text-base">
               Whether you are bidding on a {city.commonServices[0].toLowerCase()}{" "}
               project or a full backyard renovation, Shrubb gives your proposals
               a professional edge that closes deals.
             </p>
 
-            <div className="mt-12 grid gap-8 sm:grid-cols-2">
+            <div className="mt-8 grid gap-4 sm:mt-12 sm:gap-8 sm:grid-cols-2">
               {/* Card 1 */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-8">
+              <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-8">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50">
                   <BoltIcon className="h-6 w-6 text-brand-600" />
                 </div>
                 <h3 className="mt-5 text-lg font-bold text-gray-900">
                   15-Minute Proposals, Not 3-Hour Ones
                 </h3>
-                <p className="mt-2 leading-relaxed text-gray-600">
+                <p className="mt-2 text-sm leading-relaxed text-gray-600 sm:text-base">
                   In the competitive {city.city} market, the first landscaper to
                   send a polished proposal often wins the job. Shrubb condenses
                   your workflow from hours to minutes — upload a yard photo, set
@@ -309,14 +313,14 @@ export default async function CityLandingPage({
               </div>
 
               {/* Card 2 */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-8">
+              <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-8">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50">
                   <LeafIcon className="h-6 w-6 text-brand-600" />
                 </div>
                 <h3 className="mt-5 text-lg font-bold text-gray-900">
                   Zone-Accurate Plant Recommendations
                 </h3>
-                <p className="mt-2 leading-relaxed text-gray-600">
+                <p className="mt-2 text-sm leading-relaxed text-gray-600 sm:text-base">
                   Every proposal Shrubb generates for {city.city} clients
                   includes plants suited to USDA Zone {city.usdaZone} and the
                   local {city.state} climate. From{" "}
@@ -328,14 +332,14 @@ export default async function CityLandingPage({
               </div>
 
               {/* Card 3 */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-8">
+              <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-8">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50">
                   <ChartIcon className="h-6 w-6 text-brand-600" />
                 </div>
                 <h3 className="mt-5 text-lg font-bold text-gray-900">
                   Close More {city.averageProjectSize} Projects
                 </h3>
-                <p className="mt-2 leading-relaxed text-gray-600">
+                <p className="mt-2 text-sm leading-relaxed text-gray-600 sm:text-base">
                   The average {city.city} landscaping project ranges from{" "}
                   {city.averageProjectSize}. Shrubb&apos;s professional proposals —
                   complete with renders, itemized plant lists, and a one-click
@@ -345,14 +349,14 @@ export default async function CityLandingPage({
               </div>
 
               {/* Card 4 */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-8">
+              <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-8">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50">
                   <TargetIcon className="h-6 w-6 text-brand-600" />
                 </div>
                 <h3 className="mt-5 text-lg font-bold text-gray-900">
                   Stand Out in the {city.city} Market
                 </h3>
-                <p className="mt-2 leading-relaxed text-gray-600">
+                <p className="mt-2 text-sm leading-relaxed text-gray-600 sm:text-base">
                   With {city.population} residents and growing demand for{" "}
                   {city.commonServices[0].toLowerCase()}, competition among{" "}
                   {city.city} landscapers is fierce. A Shrubb proposal with
@@ -362,25 +366,39 @@ export default async function CityLandingPage({
                 </p>
               </div>
             </div>
+
+            {/* How to get started */}
+            <div className="mt-8 rounded-xl border border-brand-200 bg-brand-50 px-4 py-4 sm:mt-12 sm:px-8 sm:py-5">
+              <p className="mb-2 text-center text-xs font-bold uppercase tracking-wider text-brand-700 sm:mb-3 sm:text-sm">
+                How to get started
+              </p>
+              <div className="flex flex-col items-center justify-center gap-2 text-center text-sm font-medium text-brand-800 sm:flex-row sm:gap-4 sm:text-base">
+                <span>1. Sign up free</span>
+                <span className="hidden text-brand-400 sm:inline">&rarr;</span>
+                <span>2. Upload a client yard</span>
+                <span className="hidden text-brand-400 sm:inline">&rarr;</span>
+                <span>3. Send your first proposal</span>
+              </div>
+            </div>
           </div>
         </section>
 
         {/* ================================================================= */}
         {/* CTA                                                               */}
         {/* ================================================================= */}
-        <section className="px-6 py-20">
+        <section className="px-4 py-12 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+            <h2 className="text-2xl font-bold text-gray-900 sm:text-4xl">
               Ready to win more landscaping jobs in {city.city}?
             </h2>
-            <p className="mt-4 text-lg text-gray-500">
+            <p className="mt-4 text-sm text-gray-500 sm:text-lg">
               Join landscapers across {city.state} using Shrubb to create
               stunning AI proposals and close more clients. Start your 7-day
               free trial — no credit card required.
             </p>
             <Link
               href="/signup"
-              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-brand-500 px-10 py-4 text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600"
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-10 py-4 text-base font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600 sm:inline-flex sm:w-auto"
             >
               Start your landscaper trial
               <ArrowRightIcon />
@@ -391,7 +409,7 @@ export default async function CityLandingPage({
         {/* ================================================================= */}
         {/* RELATED CITIES                                                    */}
         {/* ================================================================= */}
-        <section className="border-t border-gray-100 bg-gray-50 px-6 py-16">
+        <section className="border-t border-gray-100 bg-gray-50 px-4 py-10 sm:px-6 sm:py-16">
           <div className="mx-auto max-w-5xl">
             <h2 className="text-center text-2xl font-bold text-gray-900">
               Shrubb for Landscapers in Other Cities
@@ -400,12 +418,12 @@ export default async function CityLandingPage({
               Explore how Shrubb helps landscaping professionals across the
               country.
             </p>
-            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:mt-10 sm:gap-6 lg:grid-cols-4">
               {relatedCities.map((rc) => (
                 <Link
                   key={rc.slug}
                   href={`/landscaping/${rc.slug}`}
-                  className="group rounded-xl border border-gray-200 bg-white p-6 transition hover:border-brand-300 hover:shadow-md"
+                  className="group rounded-xl border border-gray-200 bg-white p-4 transition hover:border-brand-300 hover:shadow-md sm:p-6"
                 >
                   <p className="text-lg font-bold text-gray-900 group-hover:text-brand-600">
                     {rc.city}, {rc.stateCode}
@@ -429,12 +447,12 @@ export default async function CityLandingPage({
       {/* =================================================================== */}
       {/* FOOTER                                                              */}
       {/* =================================================================== */}
-      <footer className="border-t border-gray-100 bg-white px-6 py-10">
+      <footer className="border-t border-gray-100 bg-white px-4 py-6 sm:px-6 sm:py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
-          <span className="text-sm font-light tracking-wide text-gray-900">
+          <span className="text-xs font-light tracking-wide text-gray-900 sm:text-sm">
             shrubb
           </span>
-          <nav className="flex gap-6 text-sm text-gray-400">
+          <nav className="flex flex-wrap justify-center gap-4 text-xs text-gray-400 sm:gap-6 sm:text-sm">
             <Link href="/" className="hover:text-gray-600">
               Home
             </Link>
@@ -448,7 +466,7 @@ export default async function CityLandingPage({
               Sign in
             </Link>
           </nav>
-          <p className="text-xs text-gray-400">
+          <p className="text-[10px] text-gray-400 sm:text-xs">
             &copy; {new Date().getFullYear()} Shrubb. All rights reserved.
           </p>
         </div>
