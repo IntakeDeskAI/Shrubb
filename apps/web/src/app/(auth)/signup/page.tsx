@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { ShrubbLogo } from '@/components/shrubb-logo';
 import { SubmitButton } from './submit-button';
@@ -48,15 +48,25 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
       return;
     }
 
-    // If no session was created (e.g. email confirmation required), inform user
-    if (!data.session) {
-      redirect(
-        '/signup?error=' +
-          encodeURIComponent(
-            'Please check your email to confirm your account, then sign in.',
-          ),
-      );
-      return;
+    // If no session (email confirmation is on), auto-confirm via admin API and sign in
+    if (!data.session && data.user) {
+      const admin = await createServiceClient();
+      await admin.auth.admin.updateUserById(data.user.id, {
+        email_confirm: true,
+      });
+
+      // Now sign them in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        redirect(
+          '/signup?error=' + encodeURIComponent(signInError.message),
+        );
+        return;
+      }
     }
 
     // Success — session is active, go to the app (middleware will route to onboarding)
