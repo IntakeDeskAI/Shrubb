@@ -4,6 +4,7 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { updateClient, createProposalFromConversation } from '../actions';
 import { createProposal } from '../../proposals/actions';
+import { AddressAutocomplete } from '@/components/address-autocomplete';
 
 interface ClientDetailProps {
   params: Promise<{ id: string }>;
@@ -280,10 +281,9 @@ export default async function ClientDetailPage({ params }: ClientDetailProps) {
               <label htmlFor="client_address" className="block text-sm font-medium text-gray-700">
                 Property Address
               </label>
-              <input
+              <AddressAutocomplete
                 id="client_address"
                 name="client_address"
-                type="text"
                 defaultValue={client.address ?? ''}
                 className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               />
