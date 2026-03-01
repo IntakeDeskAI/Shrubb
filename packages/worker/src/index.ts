@@ -6,6 +6,7 @@ import { handleClassifier } from './handlers/classifier.js';
 import { handleSatelliteFetch } from './handlers/satellite-fetch.js';
 import { handlePdfGeneration } from './handlers/pdf-generation.js';
 import { handleChatResponse } from './handlers/chat-response.js';
+import { handleProvisionPhone } from './handlers/provision-phone.js';
 
 const POLL_INTERVAL = parseInt(process.env.JOB_POLL_INTERVAL_MS ?? '3000', 10);
 const WORKER_ID = process.env.WORKER_ID ?? `worker-${crypto.randomUUID().slice(0, 8)}`;
@@ -31,6 +32,7 @@ const handlers: Record<string, JobHandler> = {
   satellite_fetch: handleSatelliteFetch,
   pdf_generation: handlePdfGeneration,
   chat_response: handleChatResponse,
+  provision_phone: handleProvisionPhone,
 };
 
 interface JobRow {

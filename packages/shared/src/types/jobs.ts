@@ -8,7 +8,8 @@ export type JobType =
   | 'classifier'
   | 'satellite_fetch'
   | 'pdf_generation'
-  | 'chat_response';
+  | 'chat_response'
+  | 'provision_phone';
 
 export type JobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
 
@@ -46,13 +47,19 @@ export interface ChatResponsePayload {
   user_id: string;
 }
 
+export interface ProvisionPhonePayload {
+  company_id: string;
+  area_code?: string;
+}
+
 export type JobPayload =
   | PlannerPayload
   | VisualizerPayload
   | ClassifierPayload
   | SatelliteFetchPayload
   | PdfGenerationPayload
-  | ChatResponsePayload;
+  | ChatResponsePayload
+  | ProvisionPhonePayload;
 
 export const MAX_JOB_ATTEMPTS = 3;
 export const JOB_LOCK_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes

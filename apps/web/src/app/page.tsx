@@ -69,6 +69,9 @@ export default function HomePage() {
             Built for landscaping and design&nbsp;build teams. Upload a client&apos;s yard photo,
             generate a branded proposal with renders, plant list, and accept button — in minutes.
           </p>
+          <p className="mx-auto mt-2 max-w-xl text-[14px] leading-relaxed font-medium text-gray-800 sm:max-w-2xl sm:text-base">
+            Get a dedicated Shrubb number that texts leads instantly and answers inbound calls with AI.
+          </p>
 
           {/* Primary CTA — full width on mobile, auto on desktop */}
           <Link
@@ -88,6 +91,94 @@ export default function HomePage() {
               See a sample proposal
             </a>
           </p>
+
+          {/* Proof strip */}
+          <p className="mt-4 text-[11px] tracking-wide text-gray-400 sm:text-xs">
+            Dedicated local number &middot; SMS + inbound calls &middot; Transcripts saved &middot; Cancel anytime
+          </p>
+        </div>
+      </section>
+
+      {/* ═══════════ YOUR SHRUBB AI NUMBER ═══════════ */}
+      <section className="border-b border-gray-100 bg-white px-5 py-10 sm:px-6 sm:py-14">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-xl font-bold text-gray-900 sm:text-3xl">Your Shrubb AI number</h2>
+          <ul className="mx-auto mt-5 max-w-md space-y-3 text-left text-[14px] text-gray-700 sm:text-base">
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">1</span>
+              Shrubb assigns your business a local number
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">2</span>
+              AI replies to texts and answers inbound calls
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">3</span>
+              Every conversation is saved with transcripts and summaries
+            </li>
+          </ul>
+
+          {/* Demo button */}
+          <a
+            href="#ai-demo"
+            className="mt-6 inline-flex items-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-5 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-100"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            See AI texting + call handling demo
+          </a>
+        </div>
+      </section>
+
+      {/* ═══════════ AI DEMO — static screenshots ═══════════ */}
+      <section id="ai-demo" className="border-b border-gray-100 bg-gray-50/80 px-4 py-10 sm:px-6 sm:py-14">
+        <div className="mx-auto max-w-4xl">
+          <h3 className="text-center text-lg font-bold text-gray-900 sm:text-xl">AI SMS + Call Handling</h3>
+          <p className="mt-1 text-center text-xs text-gray-500 sm:text-sm">
+            See how Shrubb handles inbound leads automatically.
+          </p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-3 sm:gap-6">
+            {/* Screenshot 1: Call log */}
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-gradient-to-br from-brand-50 to-brand-100">
+                <div className="text-center">
+                  <svg className="mx-auto h-8 w-8 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                  </svg>
+                  <p className="mt-2 text-xs font-semibold text-brand-700">Call Log</p>
+                </div>
+              </div>
+              <p className="mt-3 text-center text-xs font-medium text-gray-600">Inbound calls answered by AI</p>
+            </div>
+
+            {/* Screenshot 2: Transcript */}
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-gradient-to-br from-brand-50 to-brand-100">
+                <div className="text-center">
+                  <svg className="mx-auto h-8 w-8 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                  <p className="mt-2 text-xs font-semibold text-brand-700">Transcript</p>
+                </div>
+              </div>
+              <p className="mt-3 text-center text-xs font-medium text-gray-600">Full transcript saved automatically</p>
+            </div>
+
+            {/* Screenshot 3: Lead created */}
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-gradient-to-br from-brand-50 to-brand-100">
+                <div className="text-center">
+                  <svg className="mx-auto h-8 w-8 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+                  </svg>
+                  <p className="mt-2 text-xs font-semibold text-brand-700">Lead Created</p>
+                </div>
+              </div>
+              <p className="mt-3 text-center text-xs font-medium text-gray-600">New lead added to your CRM</p>
+            </div>
+          </div>
         </div>
       </section>
 
