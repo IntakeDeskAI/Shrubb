@@ -105,6 +105,28 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id);
     }
 
+    // Queue phone number provisioning job
+    const { error: phoneJobError } = await serviceClient.from('jobs').insert({
+      user_id: user.id,
+      company_id: company.id,
+      type: 'provision_phone',
+      status: 'queued',
+      payload: {
+        company_id: company.id,
+        area_code: body.area_code ?? '',
+      },
+    });
+
+    if (phoneJobError) {
+      console.error('Onboarding: phone provisioning job failed to queue', phoneJobError);
+      // Non-blocking — company is still created
+    }
+
+    // Create default company settings
+    await serviceClient.from('company_settings').insert({
+      company_id: company.id,
+    });
+
     return NextResponse.json({ companyId: company.id });
   }
 

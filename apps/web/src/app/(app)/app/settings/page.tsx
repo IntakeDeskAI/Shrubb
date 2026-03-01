@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { getActiveCompany } from '@/lib/company';
 import { B2B_ADDONS, type B2BAddonName } from '@landscape-ai/shared';
-import { updateProfile } from './actions';
+import { updateProfile, updateAiSettings } from './actions';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -37,6 +37,38 @@ interface Purchase {
 interface Profile {
   full_name: string | null;
   phone: string | null;
+}
+
+interface PhoneNumber {
+  id: string;
+  phone_e164: string;
+  area_code: string | null;
+  status: string;
+}
+
+interface CompanySettingsRow {
+  ai_sms_enabled: boolean;
+  ai_calls_enabled: boolean;
+  call_forwarding_enabled: boolean;
+  forward_phone_e164: string | null;
+  business_hours_start: string;
+  business_hours_end: string;
+  business_hours_timezone: string;
+  auto_nudge_enabled: boolean;
+  nudge_delay_hours: number;
+  nudge_max_count: number;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function formatPhone(e164: string): string {
+  const digits = e164.replace(/\D/g, '');
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
+  return e164;
 }
 
 // ---------------------------------------------------------------------------
@@ -180,7 +212,7 @@ export default async function SettingsPage() {
   const company = await getActiveCompany(supabase, user.id);
 
   // Fetch data in parallel (company-scoped)
-  const [entitlementsRes, purchasesRes, profileRes] = await Promise.all([
+  const [entitlementsRes, purchasesRes, profileRes, phoneRes, settingsRes] = await Promise.all([
     company
       ? supabase
           .from('entitlements')
@@ -200,11 +232,29 @@ export default async function SettingsPage() {
       .select('full_name, phone')
       .eq('id', user.id)
       .single(),
+    company
+      ? supabase
+          .from('phone_numbers')
+          .select('id, phone_e164, area_code, status')
+          .eq('account_id', company.companyId)
+          .eq('status', 'active')
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    company
+      ? supabase
+          .from('company_settings')
+          .select('*')
+          .eq('company_id', company.companyId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   const entitlements = entitlementsRes.data as Entitlements | null;
   const purchases = ((purchasesRes as { data: Purchase[] | null }).data ?? []) as Purchase[];
   const profile = profileRes.data as Profile | null;
+  const phoneNumber = phoneRes.data as PhoneNumber | null;
+  const aiSettings = settingsRes.data as CompanySettingsRow | null;
 
   const hasEntitlements = entitlements && entitlements.tier !== 'none';
 
@@ -338,7 +388,210 @@ export default async function SettingsPage() {
       )}
 
       {/* ---------------------------------------------------------------- */}
-      {/* Section 5: Profile                                                */}
+      {/* Section 5: Shrubb AI Number                                       */}
+      {/* ---------------------------------------------------------------- */}
+      {company && (
+        <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900">Your Shrubb AI Number</h2>
+
+          {phoneNumber ? (
+            <div className="mt-3">
+              <p className="text-2xl font-bold tracking-wide text-brand-600">
+                {formatPhone(phoneNumber.phone_e164)}
+              </p>
+              <p className="mt-1 text-xs text-gray-400">
+                Dedicated local number &middot; SMS + inbound calls
+              </p>
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-gray-500">
+              Your AI number is being provisioned. This usually takes less than a minute.
+            </p>
+          )}
+
+          {aiSettings && (
+            <form action={updateAiSettings} className="mt-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Enable AI SMS auto-replies</p>
+                  <p className="text-xs text-gray-400">AI responds to inbound text messages</p>
+                </div>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    name="ai_sms_enabled"
+                    value="true"
+                    defaultChecked={aiSettings.ai_sms_enabled}
+                    className="peer sr-only"
+                  />
+                  <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-brand-500 peer-checked:after:translate-x-full" />
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Enable AI to answer inbound calls</p>
+                  <p className="text-xs text-gray-400">AI answers and transcribes phone calls</p>
+                </div>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    name="ai_calls_enabled"
+                    value="true"
+                    defaultChecked={aiSettings.ai_calls_enabled}
+                    className="peer sr-only"
+                  />
+                  <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-brand-500 peer-checked:after:translate-x-full" />
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Forward calls to my phone</p>
+                  <p className="text-xs text-gray-400">Route calls to your personal number</p>
+                </div>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    name="call_forwarding_enabled"
+                    value="true"
+                    defaultChecked={aiSettings.call_forwarding_enabled}
+                    className="peer sr-only"
+                  />
+                  <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-brand-500 peer-checked:after:translate-x-full" />
+                </label>
+              </div>
+
+              <div>
+                <label htmlFor="forward_phone" className="block text-sm font-medium text-gray-700">
+                  Forwarding Number
+                </label>
+                <input
+                  id="forward_phone"
+                  name="forward_phone_e164"
+                  type="tel"
+                  defaultValue={aiSettings.forward_phone_e164 ?? ''}
+                  placeholder="+1 (555) 123-4567"
+                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <label htmlFor="bh_start" className="block text-sm font-medium text-gray-700">
+                    Business hours start
+                  </label>
+                  <input
+                    id="bh_start"
+                    name="business_hours_start"
+                    type="time"
+                    defaultValue={aiSettings.business_hours_start}
+                    className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="bh_end" className="block text-sm font-medium text-gray-700">
+                    Business hours end
+                  </label>
+                  <input
+                    id="bh_end"
+                    name="business_hours_end"
+                    type="time"
+                    defaultValue={aiSettings.business_hours_end}
+                    className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="bh_tz" className="block text-sm font-medium text-gray-700">
+                    Timezone
+                  </label>
+                  <select
+                    id="bh_tz"
+                    name="business_hours_timezone"
+                    defaultValue={aiSettings.business_hours_timezone}
+                    className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  >
+                    <option value="America/New_York">Eastern</option>
+                    <option value="America/Chicago">Central</option>
+                    <option value="America/Denver">Mountain</option>
+                    <option value="America/Los_Angeles">Pacific</option>
+                    <option value="America/Anchorage">Alaska</option>
+                    <option value="Pacific/Honolulu">Hawaii</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-2 border-t border-gray-100 pt-4">
+                <h3 className="text-sm font-semibold text-gray-900">Proposal Auto-Nudge</h3>
+                <p className="mt-0.5 text-xs text-gray-400">
+                  Automatically text clients who viewed a proposal but haven&apos;t responded.
+                </p>
+
+                <div className="mt-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Enable auto-nudge follow-ups</p>
+                    <p className="text-xs text-gray-400">Send SMS reminders for viewed proposals</p>
+                  </div>
+                  <label className="relative inline-flex cursor-pointer items-center">
+                    <input
+                      type="checkbox"
+                      name="auto_nudge_enabled"
+                      value="true"
+                      defaultChecked={aiSettings.auto_nudge_enabled}
+                      className="peer sr-only"
+                    />
+                    <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-brand-500 peer-checked:after:translate-x-full" />
+                  </label>
+                </div>
+
+                <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="nudge_delay" className="block text-sm font-medium text-gray-700">
+                      Delay before first nudge (hours)
+                    </label>
+                    <input
+                      id="nudge_delay"
+                      name="nudge_delay_hours"
+                      type="number"
+                      min={12}
+                      max={168}
+                      defaultValue={aiSettings.nudge_delay_hours}
+                      className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="nudge_max" className="block text-sm font-medium text-gray-700">
+                      Max follow-ups per proposal
+                    </label>
+                    <select
+                      id="nudge_max"
+                      name="nudge_max_count"
+                      defaultValue={aiSettings.nudge_max_count}
+                      className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                    >
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="rounded-lg bg-brand-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600"
+                >
+                  Save AI Settings
+                </button>
+              </div>
+            </form>
+          )}
+        </section>
+      )}
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Section 6: Profile                                                */}
       {/* ---------------------------------------------------------------- */}
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900">Profile</h2>

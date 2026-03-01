@@ -45,6 +45,41 @@ export default async function AppHome() {
     .eq('company_id', companyId)
     .order('created_at', { ascending: false });
 
+  // Load response time stats
+  const { data: responseStats } = await supabase
+    .from('conversations')
+    .select('first_inbound_at, first_response_at')
+    .eq('account_id', companyId)
+    .not('first_inbound_at', 'is', null)
+    .not('first_response_at', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  let avgResponseSeconds: number | null = null;
+  let totalConvosTracked = 0;
+  if (responseStats && responseStats.length > 0) {
+    const times = responseStats
+      .filter((r) => r.first_inbound_at && r.first_response_at)
+      .map((r) => {
+        const inbound = new Date(r.first_inbound_at!).getTime();
+        const response = new Date(r.first_response_at!).getTime();
+        return (response - inbound) / 1000;
+      })
+      .filter((t) => t >= 0 && t < 86400);
+    if (times.length > 0) {
+      avgResponseSeconds = Math.round(times.reduce((a, b) => a + b, 0) / times.length);
+      totalConvosTracked = times.length;
+    }
+  }
+
+  // Load recent lead count (last 7 days)
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { count: newLeadsCount } = await supabase
+    .from('leads')
+    .select('id', { count: 'exact', head: true })
+    .eq('account_id', companyId)
+    .gte('created_at', weekAgo);
+
   const hasEntitlements = entitlements && entitlements.tier !== 'none';
 
   return (
@@ -68,9 +103,38 @@ export default async function AppHome() {
         )}
       </div>
 
+      {/* Lead Response Stats */}
+      {hasEntitlements && (
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-lg border border-gray-200 bg-white p-4">
+            <p className="text-xs font-medium text-gray-500">Avg Response Time</p>
+            <p className="mt-1 text-2xl font-bold text-brand-600">
+              {avgResponseSeconds !== null
+                ? avgResponseSeconds < 60
+                  ? `${avgResponseSeconds}s`
+                  : `${Math.round(avgResponseSeconds / 60)}m`
+                : '—'}
+            </p>
+            {totalConvosTracked > 0 && (
+              <p className="mt-0.5 text-[11px] text-gray-400">
+                across {totalConvosTracked} conversations
+              </p>
+            )}
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-white p-4">
+            <p className="text-xs font-medium text-gray-500">New Leads (7 days)</p>
+            <p className="mt-1 text-2xl font-bold text-gray-900">{newLeadsCount ?? 0}</p>
+          </div>
+          <Link href="/app/inbox" className="rounded-lg border border-gray-200 bg-white p-4 transition hover:border-brand-200">
+            <p className="text-xs font-medium text-gray-500">Inbox</p>
+            <p className="mt-1 text-sm font-semibold text-brand-600">View messages &amp; calls</p>
+          </Link>
+        </div>
+      )}
+
       {/* Entitlements Summary */}
       {hasEntitlements && (
-        <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4">
+        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
           <div className="flex flex-wrap gap-6 text-sm">
             <div>
               <span className="text-gray-500">Plan:</span>{' '}

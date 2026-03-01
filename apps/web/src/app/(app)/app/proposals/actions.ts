@@ -117,15 +117,47 @@ export async function markProposalSent(proposalId: string) {
   const company = await getActiveCompany(supabase, user.id);
   if (!company) throw new Error('No company found');
 
+  const now = new Date().toISOString();
+
   const { error } = await supabase
     .from('proposals')
     .update({
       status: 'sent',
-      sent_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      sent_at: now,
+      updated_at: now,
     })
     .eq('id', proposalId)
     .eq('company_id', company.companyId);
 
   if (error) throw new Error('Failed to mark proposal as sent');
+
+  // Schedule auto-nudge follow-ups if enabled
+  const serviceClient = await createServiceClient();
+
+  const { data: settings } = await serviceClient
+    .from('company_settings')
+    .select('auto_nudge_enabled, nudge_delay_hours, nudge_max_count')
+    .eq('company_id', company.companyId)
+    .maybeSingle();
+
+  if (settings?.auto_nudge_enabled) {
+    const delayHours = settings.nudge_delay_hours || 48;
+    const maxCount = settings.nudge_max_count || 2;
+
+    for (let i = 1; i <= maxCount; i++) {
+      const scheduledAt = new Date(
+        Date.now() + delayHours * i * 60 * 60 * 1000,
+      ).toISOString();
+
+      await serviceClient.from('proposal_nudges').insert({
+        proposal_id: proposalId,
+        company_id: company.companyId,
+        nudge_number: i,
+        scheduled_at: scheduledAt,
+        status: 'pending',
+      });
+    }
+
+    console.log(`[markProposalSent] Scheduled ${maxCount} nudges for proposal ${proposalId}`);
+  }
 }

@@ -480,6 +480,205 @@ export interface Database {
           share_token?: string | null;
         };
       };
+      phone_numbers: {
+        Row: {
+          id: string;
+          account_id: string;
+          provider: string;
+          phone_e164: string;
+          area_code: string | null;
+          status: string;
+          purchased_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          account_id: string;
+          provider?: string;
+          phone_e164: string;
+          area_code?: string | null;
+          status?: string;
+          purchased_at?: string;
+        };
+        Update: {
+          status?: string;
+          area_code?: string | null;
+        };
+      };
+      leads: {
+        Row: {
+          id: string;
+          account_id: string;
+          name: string | null;
+          phone: string;
+          do_not_contact: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          account_id: string;
+          name?: string | null;
+          phone: string;
+          do_not_contact?: boolean;
+        };
+        Update: {
+          name?: string | null;
+          phone?: string;
+          do_not_contact?: boolean;
+          updated_at?: string;
+        };
+      };
+      conversations: {
+        Row: {
+          id: string;
+          account_id: string;
+          lead_id: string;
+          phone_number_id: string;
+          channel: string;
+          first_inbound_at: string | null;
+          first_response_at: string | null;
+          updated_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          account_id: string;
+          lead_id: string;
+          phone_number_id: string;
+          channel?: string;
+          first_inbound_at?: string | null;
+          first_response_at?: string | null;
+        };
+        Update: {
+          first_inbound_at?: string | null;
+          first_response_at?: string | null;
+          updated_at?: string;
+        };
+      };
+      sms_messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          direction: string;
+          body: string;
+          provider_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          direction: string;
+          body: string;
+          provider_id?: string | null;
+        };
+        Update: {
+          body?: string;
+        };
+      };
+      calls: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          direction: string;
+          provider_call_id: string | null;
+          status: string;
+          recording_url: string | null;
+          transcript_text: string | null;
+          summary_text: string | null;
+          started_at: string;
+          ended_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          direction?: string;
+          provider_call_id?: string | null;
+          status?: string;
+          recording_url?: string | null;
+          transcript_text?: string | null;
+          summary_text?: string | null;
+          started_at?: string;
+          ended_at?: string | null;
+        };
+        Update: {
+          status?: string;
+          recording_url?: string | null;
+          transcript_text?: string | null;
+          summary_text?: string | null;
+          ended_at?: string | null;
+        };
+      };
+      company_settings: {
+        Row: {
+          id: string;
+          company_id: string;
+          ai_sms_enabled: boolean;
+          ai_calls_enabled: boolean;
+          call_forwarding_enabled: boolean;
+          forward_phone_e164: string | null;
+          business_hours_start: string;
+          business_hours_end: string;
+          business_hours_timezone: string;
+          auto_nudge_enabled: boolean;
+          nudge_delay_hours: number;
+          nudge_max_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          ai_sms_enabled?: boolean;
+          ai_calls_enabled?: boolean;
+          call_forwarding_enabled?: boolean;
+          forward_phone_e164?: string | null;
+          business_hours_start?: string;
+          business_hours_end?: string;
+          business_hours_timezone?: string;
+          auto_nudge_enabled?: boolean;
+          nudge_delay_hours?: number;
+          nudge_max_count?: number;
+        };
+        Update: {
+          ai_sms_enabled?: boolean;
+          ai_calls_enabled?: boolean;
+          call_forwarding_enabled?: boolean;
+          forward_phone_e164?: string | null;
+          business_hours_start?: string;
+          business_hours_end?: string;
+          business_hours_timezone?: string;
+          auto_nudge_enabled?: boolean;
+          nudge_delay_hours?: number;
+          nudge_max_count?: number;
+          updated_at?: string;
+        };
+      };
+      proposal_nudges: {
+        Row: {
+          id: string;
+          proposal_id: string;
+          company_id: string;
+          nudge_number: number;
+          scheduled_at: string;
+          sent_at: string | null;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          proposal_id: string;
+          company_id: string;
+          nudge_number?: number;
+          scheduled_at: string;
+          sent_at?: string | null;
+          status?: string;
+        };
+        Update: {
+          sent_at?: string | null;
+          status?: string;
+        };
+      };
       jobs: {
         Row: {
           id: string;

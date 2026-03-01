@@ -43,6 +43,9 @@ export default async function AppLayout({
             <Link href="/app/proposals" className="text-sm text-gray-500 hover:text-gray-900">
               Proposals
             </Link>
+            <Link href="/app/inbox" className="text-sm text-gray-500 hover:text-gray-900">
+              Inbox
+            </Link>
             <Link href="/app/settings" className="text-sm text-gray-500 hover:text-gray-900">
               Settings
             </Link>

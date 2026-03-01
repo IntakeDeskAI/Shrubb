@@ -2,11 +2,167 @@ import { createClient } from '@/lib/supabase/server';
 import { getActiveCompany } from '@/lib/company';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { updateClient } from '../actions';
+import { updateClient, createProposalFromConversation } from '../actions';
 import { createProposal } from '../../proposals/actions';
 
 interface ClientDetailProps {
   params: Promise<{ id: string }>;
+}
+
+// ---------------------------------------------------------------------------
+// Conversation History sub-component (async server component)
+// ---------------------------------------------------------------------------
+
+async function ConversationHistory({
+  companyId,
+  clientId,
+  clientPhone,
+}: {
+  companyId: string;
+  clientId: string;
+  clientPhone: string | null;
+}) {
+  if (!clientPhone) return null;
+
+  const supabase = await createClient();
+
+  // Find lead by phone
+  const { data: lead } = await supabase
+    .from('leads')
+    .select('id')
+    .eq('account_id', companyId)
+    .eq('phone', clientPhone)
+    .maybeSingle();
+
+  if (!lead) return null;
+
+  // Find conversations for this lead
+  const { data: conversations } = await supabase
+    .from('conversations')
+    .select('id, channel, updated_at, first_inbound_at, first_response_at')
+    .eq('account_id', companyId)
+    .eq('lead_id', lead.id)
+    .order('updated_at', { ascending: false })
+    .limit(5);
+
+  if (!conversations || conversations.length === 0) return null;
+
+  const convoIds = conversations.map((c) => c.id);
+
+  // Load recent messages and calls
+  const [{ data: recentMessages }, { data: recentCalls }] = await Promise.all([
+    supabase
+      .from('sms_messages')
+      .select('id, conversation_id, direction, body, created_at')
+      .in('conversation_id', convoIds)
+      .order('created_at', { ascending: false })
+      .limit(5),
+    supabase
+      .from('calls')
+      .select('id, summary_text, transcript_text, started_at, status')
+      .in('conversation_id', convoIds)
+      .order('started_at', { ascending: false })
+      .limit(3),
+  ]);
+
+  const lastContact = conversations[0]?.updated_at;
+
+  // Calculate response time for the most recent conversation
+  const latestConvo = conversations[0];
+  let responseTimeLabel: string | null = null;
+  if (latestConvo?.first_inbound_at && latestConvo?.first_response_at) {
+    const diffMs = new Date(latestConvo.first_response_at).getTime() - new Date(latestConvo.first_inbound_at).getTime();
+    const diffSec = Math.round(diffMs / 1000);
+    if (diffSec < 60) responseTimeLabel = `${diffSec}s`;
+    else if (diffSec < 3600) responseTimeLabel = `${Math.round(diffSec / 60)}m`;
+    else responseTimeLabel = `${Math.round(diffSec / 3600)}h`;
+  }
+
+  // Find the primary conversation for proposal generation (most recent with messages)
+  const primaryConvoId = conversations[0]?.id;
+
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900">AI Communication</h2>
+        {responseTimeLabel && (
+          <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700">
+            Response: {responseTimeLabel}
+          </span>
+        )}
+      </div>
+      {lastContact && (
+        <p className="mt-1 text-xs text-gray-400">
+          Last contact: {new Date(lastContact).toLocaleDateString()} at{' '}
+          {new Date(lastContact).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </p>
+      )}
+
+      {/* Recent call summaries */}
+      {recentCalls && recentCalls.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <h3 className="text-sm font-medium text-gray-700">Recent Calls</h3>
+          {recentCalls.map((call) => (
+            <div key={call.id} className="rounded-md bg-gray-50 px-3 py-2">
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>{new Date(call.started_at).toLocaleDateString()}</span>
+                <span className={`font-medium ${call.status === 'completed' ? 'text-green-600' : 'text-gray-500'}`}>
+                  {call.status}
+                </span>
+              </div>
+              {call.summary_text && (
+                <p className="mt-1 text-xs text-gray-600">{call.summary_text}</p>
+              )}
+              {call.transcript_text && (
+                <details className="mt-1">
+                  <summary className="cursor-pointer text-xs font-medium text-brand-600">
+                    View transcript
+                  </summary>
+                  <pre className="mt-1 whitespace-pre-wrap text-xs text-gray-500">
+                    {call.transcript_text}
+                  </pre>
+                </details>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Recent messages */}
+      {recentMessages && recentMessages.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <h3 className="text-sm font-medium text-gray-700">Recent Messages</h3>
+          {recentMessages.map((msg) => (
+            <div key={msg.id} className="flex gap-2 text-xs">
+              <span className={`shrink-0 font-medium ${msg.direction === 'inbound' ? 'text-gray-700' : 'text-brand-600'}`}>
+                {msg.direction === 'inbound' ? 'Lead:' : 'AI:'}
+              </span>
+              <span className="text-gray-600">{msg.body}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Generate proposal from conversation */}
+      {primaryConvoId && (
+        <div className="mt-4 border-t border-gray-100 pt-4">
+          <form action={createProposalFromConversation}>
+            <input type="hidden" name="conversation_id" value={primaryConvoId} />
+            <input type="hidden" name="client_id" value={clientId} />
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-50 px-4 py-2 text-sm font-medium text-brand-700 transition hover:bg-brand-100"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              Generate proposal from conversation
+            </button>
+          </form>
+        </div>
+      )}
+    </section>
+  );
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -158,6 +314,9 @@ export default async function ClientDetailPage({ params }: ClientDetailProps) {
           </div>
         </form>
       </section>
+
+      {/* AI Communication History */}
+      <ConversationHistory companyId={company.companyId} clientId={client.id} clientPhone={client.phone} />
 
       {/* Create proposal for this client */}
       {projects && projects.length > 0 && (
