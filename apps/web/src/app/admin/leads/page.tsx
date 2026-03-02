@@ -10,7 +10,7 @@ export default async function AdminLeadsPage({
   const supabase = await createServiceClient();
 
   // ── Stats ────────────────────────────────────────
-  const [leadsCount, convsCount, todayLeadsCount, phoneNumbersCount] =
+  const [leadsCount, convsCount, todayLeadsCount, phoneNumbersCount, demoCount, trialCount] =
     await Promise.all([
       supabase.from('leads').select('id', { count: 'exact', head: true }),
       supabase
@@ -24,18 +24,30 @@ export default async function AdminLeadsPage({
         .from('phone_numbers')
         .select('id', { count: 'exact', head: true })
         .eq('status', 'active'),
+      supabase
+        .from('leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('next_step', 'book_demo'),
+      supabase
+        .from('leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('next_step', 'start_trial'),
     ]);
 
   const totalLeads = leadsCount.count ?? 0;
   const totalConversations = convsCount.count ?? 0;
   const leadsToday = todayLeadsCount.count ?? 0;
   const activePhones = phoneNumbersCount.count ?? 0;
+  const demoRequests = demoCount.count ?? 0;
+  const trialRequests = trialCount.count ?? 0;
 
-  // ── Leads with conversations ─────────────────────
+  // ── Leads with conversations + Bland fields ──────
   let leadsQuery = supabase
     .from('leads')
     .select(
       `id, name, phone, account_id, created_at, do_not_contact,
+       email, company_name, city_state, leads_per_week, current_tools,
+       next_step, is_landscaping_company, notes,
        companies!leads_account_id_fkey(name),
        conversations(id, channel, first_inbound_at, first_response_at, updated_at,
          sms_messages(id),
@@ -47,9 +59,8 @@ export default async function AdminLeadsPage({
 
   if (q && q.trim().length > 0) {
     const search = q.trim();
-    // Search by name or phone
     leadsQuery = leadsQuery.or(
-      `name.ilike.%${search}%,phone.ilike.%${search}%`,
+      `name.ilike.%${search}%,phone.ilike.%${search}%,company_name.ilike.%${search}%,email.ilike.%${search}%,city_state.ilike.%${search}%`,
     );
   }
 
@@ -57,7 +68,7 @@ export default async function AdminLeadsPage({
 
   // ── Build rows ───────────────────────────────────
   const rows = (leads ?? []).map((lead) => {
-    const company = (lead.companies as unknown as { name: string })?.name ?? '';
+    const accountCompany = (lead.companies as unknown as { name: string })?.name ?? '';
     const convos = (lead.conversations as unknown as Array<{
       id: string;
       channel: string;
@@ -76,10 +87,6 @@ export default async function AdminLeadsPage({
       (sum, c) => sum + (c.calls?.length ?? 0),
       0,
     );
-    const lastActivity = convos.length > 0
-      ? convos.reduce((latest, c) =>
-          c.updated_at > latest ? c.updated_at : latest, convos[0].updated_at)
-      : lead.created_at;
 
     // Calculate average response time across conversations
     let avgResponseMs: number | null = null;
@@ -95,9 +102,12 @@ export default async function AdminLeadsPage({
         responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
     }
 
-    // Derive status
+    // Derive status from next_step or conversation state
     let status = 'new';
     if (lead.do_not_contact) status = 'dnc';
+    else if ((lead as Record<string, unknown>).next_step === 'redirected') status = 'redirected';
+    else if ((lead as Record<string, unknown>).next_step === 'book_demo') status = 'demo';
+    else if ((lead as Record<string, unknown>).next_step === 'start_trial') status = 'trial';
     else if (convos.some((c) => c.first_response_at)) status = 'responded';
     else if (convos.length > 0) status = 'contacted';
 
@@ -105,13 +115,20 @@ export default async function AdminLeadsPage({
       id: lead.id,
       name: lead.name,
       phone: lead.phone,
-      company,
+      email: (lead as Record<string, unknown>).email as string | null,
+      companyName: (lead as Record<string, unknown>).company_name as string | null,
+      cityState: (lead as Record<string, unknown>).city_state as string | null,
+      leadsPerWeek: (lead as Record<string, unknown>).leads_per_week as string | null,
+      currentTools: (lead as Record<string, unknown>).current_tools as string | null,
+      nextStep: (lead as Record<string, unknown>).next_step as string | null,
+      isLandscaping: (lead as Record<string, unknown>).is_landscaping_company as boolean | null,
+      notes: (lead as Record<string, unknown>).notes as string | null,
+      accountCompany,
       status,
       conversations: convos.length,
       messages: totalMessages,
       calls: totalCalls,
       avgResponseMs,
-      lastActivity,
       createdAt: lead.created_at,
     };
   });
@@ -124,17 +141,13 @@ export default async function AdminLeadsPage({
       </div>
 
       {/* Stats Grid */}
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-6">
         <StatCard label="Total Leads" value={totalLeads.toLocaleString()} />
-        <StatCard
-          label="Conversations"
-          value={totalConversations.toLocaleString()}
-        />
-        <StatCard label="Leads Today" value={leadsToday.toLocaleString()} />
-        <StatCard
-          label="Active Phone Numbers"
-          value={activePhones.toLocaleString()}
-        />
+        <StatCard label="Today" value={leadsToday.toLocaleString()} />
+        <StatCard label="Conversations" value={totalConversations.toLocaleString()} />
+        <StatCard label="Demo Requests" value={demoRequests.toLocaleString()} />
+        <StatCard label="Trial Requests" value={trialRequests.toLocaleString()} />
+        <StatCard label="Active Phones" value={activePhones.toLocaleString()} />
       </div>
 
       {/* Search Form */}
@@ -144,8 +157,8 @@ export default async function AdminLeadsPage({
             type="text"
             name="q"
             defaultValue={q ?? ''}
-            placeholder="Filter by name or phone..."
-            className="w-full max-w-md rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            placeholder="Filter by name, phone, company, email, or city..."
+            className="w-full max-w-lg rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           />
           <button
             type="submit"
@@ -177,41 +190,29 @@ export default async function AdminLeadsPage({
       )}
 
       {/* Results Table */}
-      <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white">
+      <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200 bg-white">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">
-                Name
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">
-                Phone
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">
-                Company
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">
-                Status
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">
-                Messages
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">
-                Calls
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">
-                Response Time
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">
-                Created
-              </th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Name</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Company</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Phone</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Email</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Location</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Leads/wk</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Tools</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Next Step</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Msgs</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Calls</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Response</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Created</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {rows.length === 0 && (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={12}
                   className="px-4 py-8 text-center text-gray-400"
                 >
                   No leads found
@@ -220,24 +221,41 @@ export default async function AdminLeadsPage({
             )}
             {rows.map((row) => (
               <tr key={row.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-900">
+                <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
                   {row.name ?? '--'}
+                  {row.isLandscaping === false && (
+                    <span className="ml-1 text-[10px] text-red-400" title="Not a landscaping company">
+                      (non-lsc)
+                    </span>
+                  )}
                 </td>
-                <td className="px-4 py-3 text-gray-700">{row.phone}</td>
-                <td className="px-4 py-3 text-gray-700">
-                  {row.company || '--'}
+                <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
+                  {row.companyName || row.accountCompany || '--'}
+                </td>
+                <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{row.phone}</td>
+                <td className="px-4 py-3 text-gray-700 max-w-[180px] truncate">
+                  {row.email || '--'}
+                </td>
+                <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
+                  {row.cityState || '--'}
+                </td>
+                <td className="px-4 py-3 text-gray-700 text-center">
+                  {row.leadsPerWeek || '--'}
+                </td>
+                <td className="px-4 py-3 text-gray-700 max-w-[140px] truncate" title={row.currentTools ?? ''}>
+                  {row.currentTools || '--'}
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge status={row.status} />
+                  <NextStepBadge step={row.nextStep} />
                 </td>
-                <td className="px-4 py-3 text-gray-700">{row.messages}</td>
-                <td className="px-4 py-3 text-gray-700">{row.calls}</td>
-                <td className="px-4 py-3 text-gray-500">
+                <td className="px-4 py-3 text-gray-700 text-center">{row.messages}</td>
+                <td className="px-4 py-3 text-gray-700 text-center">{row.calls}</td>
+                <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                   {row.avgResponseMs != null
                     ? formatDuration(row.avgResponseMs)
                     : '--'}
                 </td>
-                <td className="px-4 py-3 text-gray-500">
+                <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                   {row.createdAt
                     ? new Date(row.createdAt).toLocaleDateString()
                     : '--'}
@@ -247,6 +265,31 @@ export default async function AdminLeadsPage({
           </tbody>
         </table>
       </div>
+
+      {/* Notes section for leads that have notes */}
+      {rows.some((r) => r.notes) && (
+        <div className="mt-6">
+          <h2 className="text-lg font-medium text-gray-900">Call Notes</h2>
+          <div className="mt-3 space-y-3">
+            {rows
+              .filter((r) => r.notes)
+              .map((r) => (
+                <div
+                  key={r.id}
+                  className="rounded-lg border border-gray-200 bg-white p-4"
+                >
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                    <span>{r.name ?? 'Unknown'}</span>
+                    {r.companyName && (
+                      <span className="text-gray-400">({r.companyName})</span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-sm text-gray-600">{r.notes}</p>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -260,19 +303,28 @@ function StatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function NextStepBadge({ step }: { step: string | null }) {
+  if (!step) return <span className="text-gray-400">--</span>;
+
   const colors: Record<string, string> = {
-    new: 'bg-amber-50 text-amber-700',
-    contacted: 'bg-blue-50 text-blue-700',
-    responded: 'bg-green-50 text-green-700',
-    dnc: 'bg-red-50 text-red-700',
+    book_demo: 'bg-purple-50 text-purple-700',
+    start_trial: 'bg-green-50 text-green-700',
+    redirected: 'bg-red-50 text-red-700',
+    unknown: 'bg-gray-100 text-gray-600',
+  };
+
+  const labels: Record<string, string> = {
+    book_demo: 'Demo',
+    start_trial: 'Trial',
+    redirected: 'Redirected',
+    unknown: 'Unknown',
   };
 
   return (
     <span
-      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${colors[status] ?? 'bg-gray-100 text-gray-600'}`}
+      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${colors[step] ?? 'bg-gray-100 text-gray-600'}`}
     >
-      {status}
+      {labels[step] ?? step}
     </span>
   );
 }
