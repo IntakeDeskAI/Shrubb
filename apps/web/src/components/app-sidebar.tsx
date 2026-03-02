@@ -93,9 +93,10 @@ const NAV_ITEMS: NavItem[] = [
 interface AppSidebarProps {
   companyName: string | null;
   signOutAction: () => Promise<void>;
+  counts?: { leads: number; proposals: number };
 }
 
-export function AppSidebar({ companyName, signOutAction }: AppSidebarProps) {
+export function AppSidebar({ companyName, signOutAction, counts }: AppSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
@@ -114,6 +115,12 @@ export function AppSidebar({ companyName, signOutAction }: AppSidebarProps) {
   function isActive(href: string) {
     if (href === '/app') return pathname === '/app';
     return pathname.startsWith(href);
+  }
+
+  const countByHref: Record<string, number> = {};
+  if (counts) {
+    if (counts.leads > 0) countByHref['/app/leads'] = counts.leads;
+    if (counts.proposals > 0) countByHref['/app/proposals'] = counts.proposals;
   }
 
   // Shared sidebar content used for both desktop and mobile
@@ -144,6 +151,11 @@ export function AppSidebar({ companyName, signOutAction }: AppSidebarProps) {
           >
             <span className="h-5 w-5 shrink-0">{item.icon}</span>
             {item.label}
+            {countByHref[item.href] > 0 && (
+              <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand-500 px-1.5 text-[10px] font-bold text-white">
+                {countByHref[item.href]}
+              </span>
+            )}
           </Link>
         ))}
       </nav>

@@ -299,6 +299,40 @@ export default async function AppHome() {
     return 'New lead';
   }
 
+  // ── Activation + Urgency Queries ──
+  const { data: activePhone } = await supabase
+    .from('phone_numbers')
+    .select('phone_number')
+    .eq('account_id', companyId)
+    .eq('status', 'active')
+    .limit(1)
+    .maybeSingle();
+
+  const { count: totalLeadCount } = await supabase
+    .from('leads')
+    .select('id', { count: 'exact', head: true })
+    .eq('account_id', companyId);
+
+  const { count: newLeadCount } = await supabase
+    .from('conversations')
+    .select('id', { count: 'exact', head: true })
+    .eq('account_id', companyId)
+    .is('first_response_at', null);
+
+  const { count: draftProposalCount } = await supabase
+    .from('proposals')
+    .select('id', { count: 'exact', head: true })
+    .eq('company_id', companyId)
+    .eq('status', 'draft');
+
+  const { count: viewedProposalCount } = await supabase
+    .from('proposals')
+    .select('id', { count: 'exact', head: true })
+    .eq('company_id', companyId)
+    .eq('status', 'viewed');
+
+  const showActivationCta = activePhone && (totalLeadCount ?? 0) === 0;
+
   const hasEntitlements = entitlements && entitlements.tier !== 'none';
 
   return (
@@ -321,6 +355,42 @@ export default async function AppHome() {
           </Link>
         )}
       </div>
+
+      {/* ─── Activation CTA ─── */}
+      {hasEntitlements && showActivationCta && (
+        <div className="mt-6 rounded-xl border-2 border-brand-200 bg-gradient-to-r from-brand-50 to-emerald-50 p-6">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-3 w-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500" />
+            </span>
+            <h2 className="text-lg font-bold text-gray-900">
+              Your AI number is live. Try it now.
+            </h2>
+          </div>
+          <p className="mt-2 text-sm text-gray-600">
+            Complete a test call to see AI in action — it answers, qualifies the
+            lead, and logs everything here automatically.
+          </p>
+          <p className="mt-4 text-3xl font-extrabold tracking-tight text-gray-900">
+            {formatPhone(activePhone.phone_number)}
+          </p>
+          <div className="mt-4 flex gap-3">
+            <a
+              href={`tel:${activePhone.phone_number}`}
+              className="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-600"
+            >
+              📞 Call your number
+            </a>
+            <a
+              href={`sms:${activePhone.phone_number}`}
+              className="rounded-lg border border-brand-300 bg-white px-5 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-50"
+            >
+              💬 Text your number
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* ─── 5 Funnel Metrics ─── */}
       {hasEntitlements && (
@@ -371,6 +441,54 @@ export default async function AppHome() {
             </div>
           </div>
         </>
+      )}
+
+      {/* ─── Urgency Banners ─── */}
+      {hasEntitlements && (
+        <div className="mt-4 space-y-2">
+          {(newLeadCount ?? 0) > 0 && (
+            <Link
+              href="/app/leads"
+              className="flex items-center gap-3 rounded-lg bg-amber-50 px-4 py-3 transition hover:bg-amber-100"
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500 text-xs font-bold text-white">
+                {newLeadCount}
+              </span>
+              <span className="text-sm font-semibold text-amber-800">
+                {newLeadCount === 1 ? '1 lead waiting' : `${newLeadCount} leads waiting`} for review
+              </span>
+              <span className="ml-auto text-amber-400">›</span>
+            </Link>
+          )}
+          {(draftProposalCount ?? 0) > 0 && (
+            <Link
+              href="/app/proposals"
+              className="flex items-center gap-3 rounded-lg bg-blue-50 px-4 py-3 transition hover:bg-blue-100"
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
+                {draftProposalCount}
+              </span>
+              <span className="text-sm font-semibold text-blue-800">
+                {draftProposalCount === 1 ? '1 estimate ready' : `${draftProposalCount} estimates ready`} to send
+              </span>
+              <span className="ml-auto text-blue-400">›</span>
+            </Link>
+          )}
+          {(viewedProposalCount ?? 0) > 0 && (
+            <Link
+              href="/app/proposals"
+              className="flex items-center gap-3 rounded-lg bg-emerald-50 px-4 py-3 transition hover:bg-emerald-100"
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white">
+                {viewedProposalCount}
+              </span>
+              <span className="text-sm font-semibold text-emerald-800">
+                {viewedProposalCount === 1 ? '1 proposal viewed' : `${viewedProposalCount} proposals viewed`} — follow up now
+              </span>
+              <span className="ml-auto text-emerald-400">›</span>
+            </Link>
+          )}
+        </div>
       )}
 
       {/* ─── Activity Feed ─── */}
