@@ -1,23 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 
-const BUCKET = 'admin-config';
-const FILE = 'ai-settings.json';
+const SETTINGS_KEY = 'ai_provider_settings';
 
 /**
  * GET /api/admin/ai-settings
- * Load persisted AI / comm provider settings from Supabase Storage.
+ * Load persisted AI / comm provider settings from admin_settings table.
  */
 export async function GET() {
   try {
     const supabase = await createServiceClient();
 
-    // Ensure bucket exists (idempotent)
-    await supabase.storage.createBucket(BUCKET, { public: false }).catch(() => {});
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', SETTINGS_KEY)
+      .maybeSingle();
 
-    const { data, error } = await supabase.storage.from(BUCKET).download(FILE);
+    if (error) {
+      console.error('[ai-settings] GET error:', error.message);
+      return NextResponse.json({
+        configs: null,
+        activeProvider: null,
+        commConfigs: null,
+        googleMapsKey: null,
+      });
+    }
 
-    if (error || !data) {
+    if (!data || !data.value) {
       // No settings saved yet — return empty defaults
       return NextResponse.json({
         configs: null,
@@ -27,10 +37,9 @@ export async function GET() {
       });
     }
 
-    const text = await data.text();
-    const settings = JSON.parse(text);
-    return NextResponse.json(settings);
+    return NextResponse.json(data.value);
   } catch (err) {
+    console.error('[ai-settings] GET unhandled error:', err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Unknown error' },
       { status: 500 },
@@ -40,7 +49,7 @@ export async function GET() {
 
 /**
  * POST /api/admin/ai-settings
- * Persist AI / comm provider settings to Supabase Storage.
+ * Persist AI / comm provider settings to admin_settings table.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -65,26 +74,28 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createServiceClient();
 
-    // Ensure bucket exists
-    await supabase.storage.createBucket(BUCKET, { public: false }).catch(() => {});
+    const payload = {
+      configs,
+      activeProvider,
+      commConfigs: commConfigs ?? null,
+      googleMapsKey: googleMapsKey ?? null,
+      updatedAt: new Date().toISOString(),
+    };
 
-    const payload = JSON.stringify(
-      {
-        configs,
-        activeProvider,
-        commConfigs: commConfigs ?? null,
-        googleMapsKey: googleMapsKey ?? null,
-        updatedAt: new Date().toISOString(),
-      },
-      null,
-      2,
-    );
-
-    const { error } = await supabase.storage
-      .from(BUCKET)
-      .upload(FILE, payload, { contentType: 'application/json', upsert: true });
+    // Upsert into admin_settings table
+    const { error } = await supabase
+      .from('admin_settings')
+      .upsert(
+        {
+          key: SETTINGS_KEY,
+          value: payload,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'key' },
+      );
 
     if (error) {
+      console.error('[ai-settings] POST error:', error.message);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -94,6 +105,7 @@ export async function POST(req: NextRequest) {
       message: 'Settings saved successfully.',
     });
   } catch (err) {
+    console.error('[ai-settings] POST unhandled error:', err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Unknown error' },
       { status: 500 },
