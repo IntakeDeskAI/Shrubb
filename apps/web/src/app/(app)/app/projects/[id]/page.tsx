@@ -73,7 +73,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   return (
     // Break out of parent layout padding to fill the viewport
     <div className="-mx-6 -my-8">
-      <div className="flex h-[calc(100vh-57px)] flex-col lg:flex-row">
+      <div className="flex h-[calc(100dvh-49px)] flex-col lg:h-dvh lg:flex-row">
         {/* Chat Panel - left side */}
         <div className="flex flex-col border-b lg:w-[60%] lg:border-b-0 lg:border-r border-gray-200">
           <div className="border-b border-gray-200 bg-white px-6 py-4">
