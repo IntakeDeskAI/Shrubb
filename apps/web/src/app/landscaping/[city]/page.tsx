@@ -98,7 +98,7 @@ export default async function CityLandingPage({
               {city.stateCode}
             </span>
             <h1 className="mt-6 text-[26px] font-extrabold tracking-tight text-gray-900 sm:text-5xl">
-              AI Proposals for Landscapers in{" "}
+              AI Sales Engine for Landscapers in{" "}
               <span className="text-brand-600">
                 {city.city}, {city.stateCode}
               </span>

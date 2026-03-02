@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: {
-    default: 'Shrubb | AI Proposals for Landscapers',
+    default: 'Shrubb | AI Sales Engine for Landscapers',
     template: '%s | Shrubb',
   },
   description:
@@ -20,14 +20,14 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     siteName: 'Shrubb',
-    title: 'Shrubb | AI Proposals for Landscapers',
+    title: 'Shrubb | AI Sales Engine for Landscapers',
     description:
       'AI-powered proposals for landscaping companies. Generate branded proposals with renders, plant lists, and accept buttons in minutes.',
     url: 'https://www.shrubb.com',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Shrubb | AI Proposals for Landscapers',
+    title: 'Shrubb | AI Sales Engine for Landscapers',
     description:
       'AI-powered proposals for landscaping companies. Generate branded proposals with renders, plant lists, and accept buttons in minutes.',
   },
