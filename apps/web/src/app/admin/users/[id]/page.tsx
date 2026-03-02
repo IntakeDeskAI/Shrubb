@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { Tooltip, HowTo } from '@/components/tooltip';
 
 export default async function AdminUserDetailPage({
   params,
@@ -160,7 +161,7 @@ export default async function AdminUserDetailPage({
               </dd>
             </div>
             <div>
-              <dt className="text-gray-500">Rerenders</dt>
+              <dt className="text-gray-500">Rerenders <Tooltip text="Additional AI landscape renderings the user can request per project" /></dt>
               <dd className="font-medium text-gray-900">
                 {entitlements.rerenders_used} /{' '}
                 {entitlements.included_rerenders}
@@ -174,14 +175,14 @@ export default async function AdminUserDetailPage({
               </dd>
             </div>
             <div>
-              <dt className="text-gray-500">Voice Minutes</dt>
+              <dt className="text-gray-500">Voice Minutes <Tooltip text="Minutes of AI-handled phone calls included in the plan" /></dt>
               <dd className="font-medium text-gray-900">
                 {entitlements.voice_minutes_used} /{' '}
                 {entitlements.included_voice_minutes}
               </dd>
             </div>
             <div>
-              <dt className="text-gray-500">Spending Cap</dt>
+              <dt className="text-gray-500">Spending Cap <Tooltip text="Maximum AI API spend allowed for this company per billing period" /></dt>
               <dd className="font-medium text-gray-900">
                 ${(entitlements.spending_used_cents / 100).toFixed(2)} / $
                 {(entitlements.spending_cap_cents / 100).toFixed(2)}
@@ -206,7 +207,7 @@ export default async function AdminUserDetailPage({
         {/* Grant Chat Credits */}
         <div className="rounded-lg border border-gray-200 bg-white p-6">
           <h3 className="text-sm font-medium text-gray-700">
-            Grant Chat Credits
+            Grant Chat Credits <Tooltip text="Adds to the company's included chat messages without charging" />
           </h3>
           <form action={grantChatCredits} className="mt-3 flex gap-2">
             <input
@@ -229,7 +230,7 @@ export default async function AdminUserDetailPage({
         {/* Grant Rerender Credits */}
         <div className="rounded-lg border border-gray-200 bg-white p-6">
           <h3 className="text-sm font-medium text-gray-700">
-            Grant Rerender Credits
+            Grant Rerender Credits <Tooltip text="Adds to the company's included rerenders without charging" />
           </h3>
           <form action={grantRerenderCredits} className="mt-3 flex gap-2">
             <input
@@ -251,7 +252,7 @@ export default async function AdminUserDetailPage({
 
         {/* Mark Refund */}
         <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h3 className="text-sm font-medium text-gray-700">Mark Refund</h3>
+          <h3 className="text-sm font-medium text-gray-700">Mark Refund <Tooltip text="Records a refund in the system. Does NOT process a Stripe refund — do that in the Stripe dashboard first." /></h3>
           <form action={markRefund} className="mt-3 flex gap-2">
             <select
               name="purchase_id"
@@ -278,6 +279,8 @@ export default async function AdminUserDetailPage({
           </form>
         </div>
       </div>
+
+      <HowTo text="Process Stripe refunds in the Stripe dashboard first, then record them here to keep usage in sync." className="mt-4" />
 
       {/* Purchases */}
       <div className="mt-8">

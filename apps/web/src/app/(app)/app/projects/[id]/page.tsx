@@ -4,6 +4,7 @@ import { redirect, notFound } from 'next/navigation';
 import { ChatPanel } from '@/components/chat/chat-panel';
 import { PreviewTabs } from '@/components/chat/preview-tabs';
 import type { PlannerJson } from '@landscape-ai/shared';
+import { HowTo } from '@/components/tooltip';
 
 interface ProjectPageProps {
   params: Promise<{ id: string }>;
@@ -83,6 +84,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               <p className="mt-0.5 text-sm text-gray-500">{project.address}</p>
             )}
           </div>
+          <HowTo text="Ask the AI to adjust the design — try 'add a patio area' or 'switch to drought-tolerant plants'." className="mx-6 mt-3" />
           <ChatPanel
             projectId={id}
             initialMessages={

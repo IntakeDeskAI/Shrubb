@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getActiveCompany } from '@/lib/company';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Tooltip } from '@/components/tooltip';
 
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-600',
@@ -65,7 +66,7 @@ export default async function ProposalsPage() {
               <tr className="border-b border-gray-200">
                 <th className="pb-3 pr-4 font-medium text-gray-500">Client</th>
                 <th className="pb-3 pr-4 font-medium text-gray-500">Project</th>
-                <th className="pb-3 pr-4 font-medium text-gray-500">Status</th>
+                <th className="pb-3 pr-4 font-medium text-gray-500">Status <Tooltip text="Draft = not yet sent · Sent = emailed to client · Viewed = client opened the link · Accepted = client approved · Declined = client passed" /></th>
                 <th className="pb-3 pr-4 font-medium text-gray-500">Sent</th>
                 <th className="pb-3 font-medium text-gray-500">Created</th>
               </tr>

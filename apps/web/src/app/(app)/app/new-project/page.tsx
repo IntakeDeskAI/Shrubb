@@ -3,6 +3,7 @@
 import { useState, useRef, useTransition } from 'react';
 import { createProject } from './actions';
 import { AddressAutocomplete, type PlaceData } from '@/components/address-autocomplete';
+import { Tooltip, HowTo } from '@/components/tooltip';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -167,7 +168,7 @@ function SelectField({
   onChange,
   options,
 }: {
-  label: string;
+  label: React.ReactNode;
   value: string;
   onChange: (v: string) => void;
   options: string[];
@@ -312,7 +313,7 @@ export default function NewProjectPage() {
               </svg>
             </div>
             <h3 className="mt-3 font-semibold text-gray-900">
-              Upload a photo
+              Upload a photo <Tooltip text="Take a photo of the yard from the street. The AI works best with clear, well-lit shots." position="bottom" />
             </h3>
             <p className="mt-1 text-sm text-gray-500">
               Take or upload a photo of your yard for the most accurate design.
@@ -350,7 +351,7 @@ export default function NewProjectPage() {
               </svg>
             </div>
             <h3 className="mt-3 font-semibold text-gray-900">
-              Enter your address
+              Enter your address <Tooltip text="We'll pull a satellite view from Google Maps to analyze the property." position="bottom" />
             </h3>
             <p className="mt-1 text-sm text-gray-500">
               We&apos;ll use satellite imagery to get a view of your property.
@@ -472,7 +473,7 @@ export default function NewProjectPage() {
             options={BUDGET_OPTIONS}
           />
           <SelectField
-            label="Maintenance level"
+            label={<>Maintenance level <Tooltip text="Low = native plants, minimal care · Medium = seasonal upkeep · High = manicured lawn and beds" position="bottom" /></>}
             value={data.maintenance}
             onChange={(v) => updateData({ maintenance: v })}
             options={MAINTENANCE_OPTIONS}
@@ -484,7 +485,7 @@ export default function NewProjectPage() {
             options={WATERING_OPTIONS}
           />
           <SelectField
-            label="Sun exposure"
+            label={<>Sun exposure <Tooltip text="Full sun = 6+ hours direct light · Partial = 3–6 hours · Full shade = under 3 hours" position="bottom" /></>}
             value={data.sunExposure}
             onChange={(v) => updateData({ sunExposure: v })}
             options={SUN_OPTIONS}
@@ -621,6 +622,8 @@ export default function NewProjectPage() {
             <p className="mt-1 text-sm text-gray-900">{data.notes}</p>
           </div>
         )}
+
+        <HowTo text="After generating, you can refine the design by chatting with AI on the project page." className="mt-4" />
 
         {/* Error message */}
         {error && (

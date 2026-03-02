@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Tooltip } from '@/components/tooltip';
 
 type ContentType = 'blog' | 'geo' | 'comparison';
 
@@ -108,7 +109,7 @@ export default function ContentManager() {
                 : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
             }`}
           >
-            {t === 'all' ? 'All' : t === 'blog' ? 'Blog Posts' : t === 'geo' ? 'GEO Pages' : 'Comparisons'}
+            {t === 'all' ? 'All' : t === 'blog' ? <>Blog Posts <Tooltip text="SEO blog posts for the marketing site" /></> : t === 'geo' ? <>GEO Pages <Tooltip text="City-specific landing pages (e.g., /landscaping/austin)" /></> : 'Comparisons'}
             <span className="ml-1.5 text-xs opacity-70">
               ({t === 'all' ? CONTENT_ITEMS.length : CONTENT_ITEMS.filter((i) => i.type === t).length})
             </span>
@@ -150,13 +151,16 @@ export default function ContentManager() {
                 </td>
                 <td className="px-4 py-3 text-gray-500">{item.lastUpdated}</td>
                 <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={() => handleGenerate(item)}
-                    disabled={generating === item.slug}
-                    className="rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 transition hover:bg-brand-100 disabled:opacity-50"
-                  >
-                    {generating === item.slug ? 'Generating...' : 'AI Refresh'}
-                  </button>
+                  <span className="inline-flex items-center gap-1">
+                    <button
+                      onClick={() => handleGenerate(item)}
+                      disabled={generating === item.slug}
+                      className="rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 transition hover:bg-brand-100 disabled:opacity-50"
+                    >
+                      {generating === item.slug ? 'Generating...' : 'AI Refresh'}
+                    </button>
+                    <Tooltip text="Regenerates this content using the current AI prompt template from Settings" />
+                  </span>
                 </td>
               </tr>
             ))}

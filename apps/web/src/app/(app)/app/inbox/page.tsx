@@ -11,6 +11,7 @@ import {
   getResponseSeconds,
   parseTranscript,
 } from '@/lib/format';
+import { Tooltip, HowTo } from '@/components/tooltip';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -179,6 +180,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
               <p className="mt-1 text-xs text-gray-400">
                 Inbound SMS to your Shrubb number will appear here.
               </p>
+              <HowTo text="Share your Shrubb AI number with leads. When they text or call, conversations appear here automatically." className="mt-4 text-left" />
             </div>
           ) : (
             smsConversations.map((convo) => {
@@ -211,7 +213,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
                       </div>
                       {responseSecs !== null && (
                         <span className="shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700">
-                          {formatResponseTime(responseSecs)} response
+                          {formatResponseTime(responseSecs)} response <Tooltip text="Time between the lead's first message and AI's first reply" />
                         </span>
                       )}
                     </div>
@@ -320,7 +322,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
                         <span
                           className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ${statusStyle}`}
                         >
-                          {call.status}
+                          {call.status} <Tooltip text="Completed = call finished · In progress = active now · No answer = went to voicemail · Failed = connection error" position="bottom" />
                         </span>
                       </div>
                     </div>

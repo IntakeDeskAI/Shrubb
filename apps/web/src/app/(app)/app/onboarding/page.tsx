@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShrubbLogo } from '@/components/shrubb-logo';
 import { AddressAutocomplete } from '@/components/address-autocomplete';
+import { Tooltip } from '@/components/tooltip';
 
 // ---------------------------------------------------------------------------
 // Step 1: Company creation
@@ -108,7 +109,7 @@ function StepCompany({
             htmlFor="company_address"
             className="block text-sm font-medium text-gray-700"
           >
-            Company Address
+            Company Address <Tooltip text="Appears on proposals. Helps AI estimate travel distance for pricing." />
           </label>
           <AddressAutocomplete
             id="company_address"
@@ -318,7 +319,7 @@ function StepClient({ companyId }: { companyId: string }) {
             htmlFor="client_address"
             className="block text-sm font-medium text-gray-700"
           >
-            Property Address (verified)
+            Property Address (verified) <Tooltip text="The address of the property you'll be working on — used for satellite imagery and plant zone data" />
           </label>
           <AddressAutocomplete
             id="client_address"

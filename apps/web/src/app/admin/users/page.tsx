@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { Tooltip } from '@/components/tooltip';
 
 export default async function AdminUsersPage({
   searchParams,
@@ -155,8 +156,8 @@ export default async function AdminUsersPage({
               <th className="px-4 py-3 text-left font-medium text-gray-500">Name</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Company</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Role</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Tier</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Projects</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Tier <Tooltip text="trial = 7-day free · starter/growth/pro = paid tiers · none = expired or no plan" /></th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Projects <Tooltip text="Number of projects created by this user's company" /></th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Chats</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Joined</th>
             </tr>

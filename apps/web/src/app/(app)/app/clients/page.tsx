@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClientRecord } from './actions';
 import { AddressAutocomplete } from '@/components/address-autocomplete';
+import { Tooltip } from '@/components/tooltip';
 
 const STATUS_STYLES: Record<string, string> = {
   lead: 'bg-gray-100 text-gray-600',
@@ -84,7 +85,7 @@ export default async function ClientsPage() {
                 <th className="pb-3 pr-4 font-medium text-gray-500">Name</th>
                 <th className="pb-3 pr-4 font-medium text-gray-500">Email</th>
                 <th className="pb-3 pr-4 font-medium text-gray-500">Address</th>
-                <th className="pb-3 pr-4 font-medium text-gray-500">Status</th>
+                <th className="pb-3 pr-4 font-medium text-gray-500">Status <Tooltip text="Lead = new contact · Proposal sent = estimate emailed · Accepted = approved · Active = work in progress · Completed = done" /></th>
                 <th className="pb-3 font-medium text-gray-500">Added</th>
               </tr>
             </thead>
@@ -103,7 +104,7 @@ export default async function ClientsPage() {
                   <td className="py-4 pr-4 text-gray-500">
                     {c.property_formatted || c.address || '—'}
                     {(c.address || c.property_address_raw) && !c.property_place_id && (
-                      <span className="ml-1.5 text-amber-500" title="Unverified address">⚠️</span>
+                      <span className="ml-1.5 text-amber-500">⚠️ <Tooltip text="This address hasn't been verified with Google Places. Verify it to enable accurate proposals and sending." position="bottom" /></span>
                     )}
                   </td>
                   <td className="py-4 pr-4">

@@ -4,6 +4,7 @@ import { redirect, notFound } from 'next/navigation';
 import { updateProposal } from '../actions';
 import { SendProposalButton } from './send-button';
 import Link from 'next/link';
+import { Tooltip } from '@/components/tooltip';
 
 interface ProposalDetailProps {
   params: Promise<{ id: string }>;
@@ -145,7 +146,7 @@ export default async function ProposalDetailPage({ params }: ProposalDetailProps
 
       {/* Cover letter / message */}
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">Cover Letter</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Cover Letter <Tooltip text="This message appears at the top of the proposal page your client sees. Personalize it for better response rates." /></h2>
         <p className="mt-1 text-xs text-gray-400">
           This message appears at the top of the proposal your client sees.
         </p>
@@ -185,7 +186,7 @@ export default async function ProposalDetailPage({ params }: ProposalDetailProps
             active={!!proposal.sent_at}
           />
           <TimelineEntry
-            label="Viewed by client"
+            label={<>Viewed by client <Tooltip text="Logged when the client opens the proposal link — they don't need to accept for this to trigger" /></>}
             date={proposal.viewed_at}
             active={!!proposal.viewed_at}
           />
@@ -224,7 +225,7 @@ function TimelineEntry({
   date,
   active,
 }: {
-  label: string;
+  label: React.ReactNode;
   date: string | null;
   active: boolean;
 }) {

@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { Tooltip, HowTo } from '@/components/tooltip';
 
 const STATUS_FILTERS = ['all', 'queued', 'running', 'failed'] as const;
 type StatusFilter = (typeof STATUS_FILTERS)[number];
@@ -34,6 +35,7 @@ export default async function AdminJobsPage({
   return (
     <div>
       <h1 className="text-2xl font-semibold text-gray-900">Jobs</h1>
+      <HowTo text="Check this page when users report stuck projects. Failed jobs with high attempt counts may need manual intervention." className="mt-3" />
 
       {/* Filter Tabs */}
       <div className="mt-6 flex gap-1 rounded-lg border border-gray-200 bg-white p-1 w-fit">
@@ -65,13 +67,13 @@ export default async function AdminJobsPage({
                 ID
               </th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">
-                Type
+                Type <Tooltip text="planner = landscape design AI · visualizer = rendering AI · phone_provision = number setup" />
               </th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">
-                Status
+                Status <Tooltip text="queued = waiting · running = in progress · completed = done · failed = error after max retries" />
               </th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">
-                Attempts
+                Attempts <Tooltip text="Number of times the job has been tried. Jobs retry automatically on failure." />
               </th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">
                 User

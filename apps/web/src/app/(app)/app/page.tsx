@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getActiveCompany } from '@/lib/company';
 import Link from 'next/link';
 import { formatPhone, timeAgo, formatResponseTime } from '@/lib/format';
+import { Tooltip, HowTo } from '@/components/tooltip';
 
 export default async function AppHome() {
   const supabase = await createClient();
@@ -238,7 +239,7 @@ export default async function AppHome() {
                 {newLeadsCount ?? 0}
               </p>
               <p className="mt-1 text-[11px] font-medium text-gray-500">
-                Leads captured
+                Leads captured <Tooltip text="Inbound SMS and calls to your Shrubb number this week" position="bottom" />
               </p>
             </div>
             <div className="rounded-lg bg-green-50 p-4 text-center">
@@ -248,7 +249,7 @@ export default async function AppHome() {
                   : '—'}
               </p>
               <p className="mt-1 text-[11px] font-medium text-gray-500">
-                Avg response
+                Avg response <Tooltip text="Average time between first inbound message and AI's first reply" position="bottom" />
               </p>
             </div>
             <div className="rounded-lg bg-amber-50 p-4 text-center">
@@ -256,7 +257,7 @@ export default async function AppHome() {
                 {proposalsSentCount ?? 0}
               </p>
               <p className="mt-1 text-[11px] font-medium text-gray-500">
-                Proposals sent
+                Proposals sent <Tooltip text="Proposals emailed to clients this week" position="bottom" />
               </p>
             </div>
           </div>
@@ -266,7 +267,9 @@ export default async function AppHome() {
       {/* ─── Recent Leads ─── */}
       {hasEntitlements && recentLeads && recentLeads.length > 0 && (
         <div className="mt-6">
-          <p className="text-xs font-semibold text-gray-500">Recent Leads</p>
+          <p className="text-xs font-semibold text-gray-500">
+            Recent Leads <Tooltip text="New = just contacted · Qualified = AI gathered project details · Proposal sent = estimate emailed · Accepted = client approved" position="bottom" />
+          </p>
           <div className="mt-2 space-y-2">
             {recentLeads.map((lead) => {
               const status = getLeadStatus(lead);
@@ -321,6 +324,10 @@ export default async function AppHome() {
         </div>
       )}
 
+      {hasEntitlements && (
+        <HowTo text="Start by adding a client, then create a project to generate an AI landscape design and proposal." className="mt-4" />
+      )}
+
       {/* ─── Entitlements Summary ─── */}
       {hasEntitlements && (
         <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
@@ -371,7 +378,9 @@ export default async function AppHome() {
       {projects && projects.length > 0 && (
         <>
           <div className="mt-8 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900">Projects</h2>
+            <h2 className="text-lg font-bold text-gray-900">
+              Projects <Tooltip text="Setup = gathering info · Planning = AI generating design · Active = design complete" />
+            </h2>
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => (

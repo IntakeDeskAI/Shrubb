@@ -3,6 +3,7 @@ import { getActiveCompany } from '@/lib/company';
 import { B2B_ADDONS, type B2BAddonName } from '@landscape-ai/shared';
 import { updateProfile, updateAiSettings, updateCompanyAddress } from './actions';
 import { CompanyAddressForm } from './company-address-form';
+import { Tooltip, HowTo } from '@/components/tooltip';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -81,7 +82,7 @@ function UsageMeter({
   used,
   included,
 }: {
-  label: string;
+  label: React.ReactNode;
   used: number;
   included: number;
 }) {
@@ -298,22 +299,22 @@ export default async function SettingsPage() {
 
             <div className="mt-6 space-y-4">
               <UsageMeter
-                label="Proposals"
+                label={<>Proposals <Tooltip text="Proposals generated this billing period. Buy a Proposal Pack add-on if you run out." /></>}
                 used={entitlements.proposals_used}
                 included={entitlements.included_proposals}
               />
               <UsageMeter
-                label="Renders"
+                label={<>Renders <Tooltip text="AI landscape renderings generated this period" /></>}
                 used={entitlements.renders_used}
                 included={entitlements.included_renders}
               />
               <UsageMeter
-                label="Chat Messages"
+                label={<>Chat Messages <Tooltip text="Messages exchanged with AI on project pages" /></>}
                 used={entitlements.chat_messages_used}
                 included={entitlements.included_chat_messages}
               />
               <UsageMeter
-                label="Voice Minutes"
+                label={<>Voice Minutes <Tooltip text="Minutes of AI-answered phone calls" /></>}
                 used={entitlements.voice_minutes_used}
                 included={entitlements.included_voice_minutes}
               />
@@ -321,7 +322,7 @@ export default async function SettingsPage() {
 
             <div className="mt-6 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">AI Spending</span>
+                <span className="text-gray-600">AI Spending <Tooltip text="Total API costs for AI operations. The spending cap protects against unexpected charges." /></span>
                 <span className="font-medium text-gray-900">
                   ${(entitlements.spending_used_cents / 100).toFixed(2)} / $
                   {(entitlements.spending_cap_cents / 100).toFixed(2)}
@@ -403,6 +404,7 @@ export default async function SettingsPage() {
           {/* Company Address */}
           <div className="mt-6 border-t border-gray-100 pt-5">
             <h3 className="text-sm font-semibold text-gray-900">Business Address</h3>
+            <HowTo text="Your business address appears on proposals and helps the AI estimate travel distance for pricing." className="mt-2" />
             {companyAddress?.address_raw && !companyAddress.address_place_id && (
               <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
                 Your business address has not been verified. Please select from the autocomplete suggestions below.
@@ -442,7 +444,7 @@ export default async function SettingsPage() {
             <form action={updateAiSettings} className="mt-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Enable AI SMS auto-replies</p>
+                  <p className="text-sm font-medium text-gray-700">Enable AI SMS auto-replies <Tooltip text="When enabled, the AI responds to inbound texts within seconds using your company context" /></p>
                   <p className="text-xs text-gray-400">AI responds to inbound text messages</p>
                 </div>
                 <label className="relative inline-flex cursor-pointer items-center">
@@ -459,7 +461,7 @@ export default async function SettingsPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Enable AI to answer inbound calls</p>
+                  <p className="text-sm font-medium text-gray-700">Enable AI to answer inbound calls <Tooltip text="AI picks up calls, asks about the project, and saves a transcript you can review" /></p>
                   <p className="text-xs text-gray-400">AI answers and transcribes phone calls</p>
                 </div>
                 <label className="relative inline-flex cursor-pointer items-center">
@@ -476,7 +478,7 @@ export default async function SettingsPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Forward calls to my phone</p>
+                  <p className="text-sm font-medium text-gray-700">Forward calls to my phone <Tooltip text="Routes calls to your personal number after the AI greeting. Turn off to let AI handle the full call." /></p>
                   <p className="text-xs text-gray-400">Route calls to your personal number</p>
                 </div>
                 <label className="relative inline-flex cursor-pointer items-center">
@@ -508,7 +510,7 @@ export default async function SettingsPage() {
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <label htmlFor="bh_start" className="block text-sm font-medium text-gray-700">
-                    Business hours start
+                    Business hours start <Tooltip text="Outside these hours, calls go straight to AI voicemail and texts get an auto-reply" />
                   </label>
                   <input
                     id="bh_start"
@@ -558,7 +560,7 @@ export default async function SettingsPage() {
 
                 <div className="mt-3 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Enable auto-nudge follow-ups</p>
+                    <p className="text-sm font-medium text-gray-700">Enable auto-nudge follow-ups <Tooltip text="Sends a friendly SMS follow-up to clients who viewed a proposal but haven't responded" /></p>
                     <p className="text-xs text-gray-400">Send SMS reminders for viewed proposals</p>
                   </div>
                   <label className="relative inline-flex cursor-pointer items-center">

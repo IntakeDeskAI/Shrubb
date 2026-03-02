@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { Tooltip } from '@/components/tooltip';
 
 export default async function AdminDashboard() {
   const supabase = await createServiceClient();
@@ -50,14 +51,14 @@ export default async function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Users" value={totalUsers.toLocaleString()} />
-        <StatCard label="Total Revenue" value={`$${totalRevenue}`} />
+        <StatCard label={<>Total Users <Tooltip text="All registered accounts across all companies" position="bottom" /></>} value={totalUsers.toLocaleString()} />
+        <StatCard label={<>Total Revenue <Tooltip text="Sum of all successful Stripe payments" position="bottom" /></>} value={`$${totalRevenue}`} />
         <StatCard
-          label="AI Spend"
+          label={<>AI Spend <Tooltip text="Total API costs (OpenAI + Anthropic) across all companies" position="bottom" /></>}
           value={`$${totalAiSpend.toFixed(2)}`}
         />
         <StatCard
-          label="Active Projects"
+          label={<>Active Projects <Tooltip text="Projects with status 'active' or 'planning'" position="bottom" /></>}
           value={totalProjects.toLocaleString()}
         />
       </div>
@@ -138,7 +139,7 @@ export default async function AdminDashboard() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: React.ReactNode; value: string }) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <p className="text-sm text-gray-500">{label}</p>

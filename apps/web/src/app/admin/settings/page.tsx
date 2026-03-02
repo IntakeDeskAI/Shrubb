@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Tooltip } from '@/components/tooltip';
 
 interface AiProviderConfig {
   provider: 'openai' | 'anthropic';
@@ -211,7 +212,7 @@ export default function AiSettingsPage() {
 
       {/* Active provider selector */}
       <div className="mt-8">
-        <h2 className="text-sm font-semibold text-gray-700">Active Provider for Content Generation</h2>
+        <h2 className="text-sm font-semibold text-gray-700">Active Provider for Content Generation <Tooltip text="The AI provider used for all design generation and chat. Switch between OpenAI and Anthropic." /></h2>
         <div className="mt-3 flex gap-3">
           {(['openai', 'anthropic'] as const).map((p) => (
             <button
@@ -269,7 +270,7 @@ export default function AiSettingsPage() {
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700">API Key</label>
+                <label className="block text-sm font-medium text-gray-700">API Key <Tooltip text="Your secret key from the provider's dashboard. Stored encrypted." /></label>
                 <input
                   type="password"
                   value={config.apiKey}
@@ -308,7 +309,7 @@ export default function AiSettingsPage() {
                 disabled={testing === config.provider || !config.apiKey || isLocked(config.provider)}
                 className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
               >
-                {testing === config.provider ? 'Testing...' : 'Test Connection'}
+                {testing === config.provider ? 'Testing...' : <>Test Connection <Tooltip text="Sends a test request to verify the API key is valid and the model responds" /></>}
               </button>
             </div>
           </div>
@@ -365,7 +366,7 @@ export default function AiSettingsPage() {
                   </div>
                 </div>
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700">Webhook URL</label>
+                  <label className="block text-sm font-medium text-gray-700">Webhook URL <Tooltip text="Paste this URL into the provider's dashboard to receive inbound events" /></label>
                   <div className="mt-1 flex items-center gap-2">
                     <code className="block flex-1 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-600">{WEBHOOK_URLS.bland}</code>
                     <button type="button" onClick={() => navigator.clipboard.writeText(WEBHOOK_URLS.bland)} className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50">Copy</button>
@@ -414,7 +415,7 @@ export default function AiSettingsPage() {
                   </div>
                 </div>
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700">Webhook URLs</label>
+                  <label className="block text-sm font-medium text-gray-700">Webhook URLs <Tooltip text="Paste these URLs into the Twilio console to receive inbound events" /></label>
                   <div className="mt-2 space-y-2">
                     {([['SMS', WEBHOOK_URLS.twilio.sms], ['SMS (Advanced)', WEBHOOK_URLS.twilio.smsAdvanced], ['Voice', WEBHOOK_URLS.twilio.voice], ['Voice Status', WEBHOOK_URLS.twilio.voiceStatus]] as const).map(([label, url]) => (
                       <div key={label} className="flex items-center gap-2">
@@ -469,7 +470,7 @@ export default function AiSettingsPage() {
 
       {/* Content generation templates */}
       <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="text-lg font-semibold text-gray-900">Content Generation Templates</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Content Generation Templates <Tooltip text="System prompts used when AI generates blog posts, GEO pages, and comparison pages" /></h3>
         <p className="mt-1 text-sm text-gray-500">System prompts used when generating content with the active AI provider.</p>
         <div className="mt-4 space-y-4">
           {[
