@@ -5,9 +5,11 @@ import { useState, useTransition } from 'react';
 export function SendProposalButton({
   proposalId,
   hasClientEmail,
+  hasVerifiedAddress = false,
 }: {
   proposalId: string;
   hasClientEmail: boolean;
+  hasVerifiedAddress?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<{ sent?: boolean; error?: string } | null>(null);
@@ -15,6 +17,11 @@ export function SendProposalButton({
   function handleSend() {
     if (!hasClientEmail) {
       setResult({ error: 'Client has no email address. Add an email first.' });
+      return;
+    }
+
+    if (!hasVerifiedAddress) {
+      setResult({ error: 'Client property address is not verified. Verify the address before sending.' });
       return;
     }
 

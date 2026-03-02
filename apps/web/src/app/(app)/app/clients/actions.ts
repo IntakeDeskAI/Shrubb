@@ -20,12 +20,23 @@ export async function createClientRecord(formData: FormData) {
   const name = (formData.get('client_name') as string)?.trim();
   if (!name) throw new Error('Client name is required');
 
+  const address = (formData.get('client_address') as string)?.trim() || null;
+  const placeId = (formData.get('client_address_place_id') as string)?.trim() || null;
+  const formatted = (formData.get('client_address_formatted') as string)?.trim() || null;
+  const lat = formData.get('client_address_lat') ? parseFloat(formData.get('client_address_lat') as string) : null;
+  const lng = formData.get('client_address_lng') ? parseFloat(formData.get('client_address_lng') as string) : null;
+
   const { error } = await supabase.from('clients').insert({
     company_id: company.companyId,
     name,
     email: (formData.get('client_email') as string)?.trim() || null,
     phone: (formData.get('client_phone') as string)?.trim() || null,
-    address: (formData.get('client_address') as string)?.trim() || null,
+    address: formatted || address,
+    property_place_id: placeId,
+    property_formatted: formatted,
+    property_lat: lat,
+    property_lng: lng,
+    property_address_raw: address,
     status: 'lead',
   });
 
@@ -47,13 +58,24 @@ export async function updateClient(formData: FormData) {
 
   const clientId = formData.get('client_id') as string;
 
+  const updAddress = (formData.get('client_address') as string)?.trim() || null;
+  const updPlaceId = (formData.get('client_address_place_id') as string)?.trim() || null;
+  const updFormatted = (formData.get('client_address_formatted') as string)?.trim() || null;
+  const updLat = formData.get('client_address_lat') ? parseFloat(formData.get('client_address_lat') as string) : null;
+  const updLng = formData.get('client_address_lng') ? parseFloat(formData.get('client_address_lng') as string) : null;
+
   const { error } = await supabase
     .from('clients')
     .update({
       name: (formData.get('client_name') as string)?.trim() || undefined,
       email: (formData.get('client_email') as string)?.trim() || null,
       phone: (formData.get('client_phone') as string)?.trim() || null,
-      address: (formData.get('client_address') as string)?.trim() || null,
+      address: updFormatted || updAddress,
+      property_place_id: updPlaceId,
+      property_formatted: updFormatted,
+      property_lat: updLat,
+      property_lng: updLng,
+      property_address_raw: updAddress,
       notes: (formData.get('client_notes') as string)?.trim() || null,
       updated_at: new Date().toISOString(),
     })

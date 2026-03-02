@@ -2,7 +2,7 @@
 
 import { useState, useRef, useTransition } from 'react';
 import { createProject } from './actions';
-import { AddressAutocomplete } from '@/components/address-autocomplete';
+import { AddressAutocomplete, type PlaceData } from '@/components/address-autocomplete';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -16,6 +16,10 @@ interface WizardData {
   photo: File | null;
   photoPreview: string | null;
   address: string;
+  addressPlaceId: string | null;
+  addressFormatted: string | null;
+  addressLat: number | null;
+  addressLng: number | null;
   // Step 2
   style: string;
   budget: string;
@@ -33,6 +37,10 @@ const INITIAL_DATA: WizardData = {
   photo: null,
   photoPreview: null,
   address: '',
+  addressPlaceId: null,
+  addressFormatted: null,
+  addressLat: null,
+  addressLng: null,
   style: 'Modern',
   budget: '$1K-$5K',
   maintenance: 'Medium',
@@ -219,7 +227,7 @@ export default function NewProjectPage() {
 
   function canAdvanceStep1(): boolean {
     if (data.inputMethod === 'photo') return !!data.photo;
-    if (data.inputMethod === 'address') return data.address.trim().length > 0;
+    if (data.inputMethod === 'address') return !!data.addressPlaceId;
     return false;
   }
 
@@ -232,7 +240,10 @@ export default function NewProjectPage() {
       fd.set('photo', data.photo);
     }
     if (data.inputMethod === 'address') {
-      fd.set('address', data.address);
+      fd.set('address', data.addressFormatted ?? data.address);
+      fd.set('address_place_id', data.addressPlaceId ?? '');
+      fd.set('address_lat', data.addressLat?.toString() ?? '');
+      fd.set('address_lng', data.addressLng?.toString() ?? '');
     }
     fd.set('style', data.style);
     fd.set('budget', data.budget);
@@ -406,6 +417,16 @@ export default function NewProjectPage() {
             <AddressAutocomplete
               value={data.address}
               onChange={(address) => updateData({ address })}
+              onPlaceSelect={(place: PlaceData) =>
+                updateData({
+                  address: place.formattedAddress,
+                  addressPlaceId: place.placeId,
+                  addressFormatted: place.formattedAddress,
+                  addressLat: place.lat,
+                  addressLng: place.lng,
+                })
+              }
+              enforceVerified
               placeholder="123 Main St, City, State"
               className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />

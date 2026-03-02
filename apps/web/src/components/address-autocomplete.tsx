@@ -7,8 +7,15 @@ import { importLibrary, setOptions } from '@googlemaps/js-api-loader';
 // Types
 // ---------------------------------------------------------------------------
 
+export interface PlaceData {
+  formattedAddress: string;
+  lat: number;
+  lng: number;
+  placeId: string;
+}
+
 interface AddressAutocompleteProps {
-  /** Form field name — populates a hidden <input> for FormData / server actions */
+  /** Form field name — populates hidden <input>s for FormData / server actions */
   name?: string;
   id?: string;
   placeholder?: string;
@@ -17,15 +24,12 @@ interface AddressAutocompleteProps {
   value?: string;
   className?: string;
   required?: boolean;
+  /** When true, user MUST select from Google Places dropdown. Blocks save otherwise. */
+  enforceVerified?: boolean;
   /** Called with the formatted address on selection (and on every keystroke in controlled mode) */
   onChange?: (address: string) => void;
   /** Called with structured place data when a suggestion is selected */
-  onPlaceSelect?: (place: {
-    formattedAddress: string;
-    lat: number;
-    lng: number;
-    placeId: string;
-  }) => void;
+  onPlaceSelect?: (place: PlaceData) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -62,6 +66,7 @@ export function AddressAutocomplete({
   value: controlledValue,
   className,
   required,
+  enforceVerified = false,
   onChange,
   onPlaceSelect,
 }: AddressAutocompleteProps) {
@@ -71,6 +76,11 @@ export function AddressAutocomplete({
 
   // The "committed" address for the hidden input (set on selection, or equals displayValue)
   const [committedAddress, setCommittedAddress] = useState(defaultValue);
+
+  // Structured place data — set when user selects from dropdown, cleared on manual edit
+  const [placeData, setPlaceData] = useState<PlaceData | null>(null);
+  const [verified, setVerified] = useState(false);
+  const [touched, setTouched] = useState(false);
 
   const [predictions, setPredictions] = useState<
     google.maps.places.AutocompletePrediction[]
@@ -83,6 +93,11 @@ export function AddressAutocomplete({
   const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
+  const placeIdInputRef = useRef<HTMLInputElement>(null);
+
+  // Should we enforce verification?
+  const shouldEnforce = enforceVerified && hasPlaces;
+  const showError = shouldEnforce && touched && !verified && displayValue.length > 0;
 
   // Initialize Places service
   useEffect(() => {
@@ -100,16 +115,30 @@ export function AddressAutocomplete({
       });
   }, []);
 
+  // Update custom validity for form enforcement
+  useEffect(() => {
+    if (placeIdInputRef.current && shouldEnforce) {
+      if (!verified && displayValue.length > 0) {
+        placeIdInputRef.current.setCustomValidity('Select a verified address from the suggestions');
+      } else {
+        placeIdInputRef.current.setCustomValidity('');
+      }
+    }
+  }, [verified, displayValue, shouldEnforce]);
+
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
+        if (shouldEnforce && displayValue.length > 0 && !verified) {
+          setTouched(true);
+        }
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [shouldEnforce, displayValue, verified]);
 
   // Fetch predictions (debounced)
   const fetchPredictions = useCallback(
@@ -157,6 +186,15 @@ export function AddressAutocomplete({
     onChange?.(val);
     fetchPredictions(val);
     setActiveIndex(-1);
+
+    // Reset verification on manual edit
+    if (verified) {
+      setPlaceData(null);
+      setVerified(false);
+    }
+    if (val.length === 0) {
+      setTouched(false);
+    }
   }
 
   function handleSelect(prediction: google.maps.places.AutocompletePrediction) {
@@ -168,32 +206,40 @@ export function AddressAutocomplete({
     setIsOpen(false);
     onChange?.(address);
 
-    // Fetch place details for lat/lng if consumer wants them
-    if (onPlaceSelect) {
-      const placesService = new google.maps.places.PlacesService(
-        document.createElement('div'),
-      );
-      placesService.getDetails(
-        {
-          placeId: prediction.place_id,
-          fields: ['formatted_address', 'geometry', 'place_id'],
-          sessionToken: sessionTokenRef.current!,
-        },
-        (place, status) => {
-          if (
-            status === google.maps.places.PlacesServiceStatus.OK &&
-            place
-          ) {
-            onPlaceSelect({
-              formattedAddress: place.formatted_address ?? address,
-              lat: place.geometry?.location?.lat() ?? 0,
-              lng: place.geometry?.location?.lng() ?? 0,
-              placeId: place.place_id ?? prediction.place_id,
-            });
-          }
-        },
-      );
-    }
+    // Always fetch place details for structured data
+    const placesService = new google.maps.places.PlacesService(
+      document.createElement('div'),
+    );
+    placesService.getDetails(
+      {
+        placeId: prediction.place_id,
+        fields: ['formatted_address', 'geometry', 'place_id'],
+        sessionToken: sessionTokenRef.current!,
+      },
+      (place, status) => {
+        if (
+          status === google.maps.places.PlacesServiceStatus.OK &&
+          place
+        ) {
+          const data: PlaceData = {
+            formattedAddress: place.formatted_address ?? address,
+            lat: place.geometry?.location?.lat() ?? 0,
+            lng: place.geometry?.location?.lng() ?? 0,
+            placeId: place.place_id ?? prediction.place_id,
+          };
+          setPlaceData(data);
+          setVerified(true);
+          setTouched(false);
+
+          // Update committed address with the formatted version
+          if (!isControlled) setInternalValue(data.formattedAddress);
+          setCommittedAddress(data.formattedAddress);
+          onChange?.(data.formattedAddress);
+
+          onPlaceSelect?.(data);
+        }
+      },
+    );
 
     // Refresh session token
     const promise = loadPlaces();
@@ -221,14 +267,34 @@ export function AddressAutocomplete({
     }
   }
 
+  function handleBlur() {
+    if (shouldEnforce && displayValue.length > 0 && !verified) {
+      setTouched(true);
+    }
+  }
+
   const inputClasses =
     className ??
     'mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20';
 
   return (
     <div ref={containerRef} className="relative">
-      {/* Hidden input for FormData (server actions / manual form reads) */}
-      {name && <input type="hidden" name={name} value={committedAddress} />}
+      {/* Hidden inputs for FormData (server actions / manual form reads) */}
+      {name && (
+        <>
+          <input type="hidden" name={name} value={committedAddress} />
+          <input
+            ref={placeIdInputRef}
+            type="hidden"
+            name={`${name}_place_id`}
+            value={placeData?.placeId ?? ''}
+            required={shouldEnforce && required}
+          />
+          <input type="hidden" name={`${name}_formatted`} value={placeData?.formattedAddress ?? ''} />
+          <input type="hidden" name={`${name}_lat`} value={placeData?.lat?.toString() ?? ''} />
+          <input type="hidden" name={`${name}_lng`} value={placeData?.lng?.toString() ?? ''} />
+        </>
+      )}
 
       {/* Visible autocomplete input */}
       <input
@@ -238,9 +304,11 @@ export function AddressAutocomplete({
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         onFocus={() => predictions.length > 0 && setIsOpen(true)}
+        onBlur={handleBlur}
         placeholder={placeholder}
         required={required}
-        className={inputClasses}
+        aria-invalid={showError || undefined}
+        className={`${inputClasses}${showError ? ' !border-red-400 !ring-red-100' : ''}`}
         autoComplete="off"
         role="combobox"
         aria-expanded={isOpen}
@@ -250,6 +318,13 @@ export function AddressAutocomplete({
           activeIndex >= 0 ? `suggestion-${activeIndex}` : undefined
         }
       />
+
+      {/* Validation message */}
+      {showError && (
+        <p className="mt-1 text-xs text-red-600">
+          Select a verified address from the suggestions
+        </p>
+      )}
 
       {/* Suggestions dropdown */}
       {isOpen && predictions.length > 0 && (

@@ -42,7 +42,7 @@ export default async function ProposalDetailPage({ params }: ProposalDetailProps
   // Load client
   const { data: client } = await supabase
     .from('clients')
-    .select('name, email, phone, address')
+    .select('name, email, phone, address, property_place_id, property_formatted')
     .eq('id', proposal.client_id)
     .single();
 
@@ -113,7 +113,16 @@ export default async function ProposalDetailPage({ params }: ProposalDetailProps
           <p className="text-gray-900 font-medium">{client?.name}</p>
           {client?.email && <p className="text-gray-500">{client.email}</p>}
           {client?.phone && <p className="text-gray-500">{client.phone}</p>}
-          {client?.address && <p className="text-gray-500">{client.address}</p>}
+          {(client?.property_formatted || client?.address) && (
+            <p className="text-gray-500">
+              {client.property_formatted || client.address}
+              {client.address && !client.property_place_id && (
+                <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-700">
+                  unverified
+                </span>
+              )}
+            </p>
+          )}
         </div>
       </section>
 
@@ -191,7 +200,7 @@ export default async function ProposalDetailPage({ params }: ProposalDetailProps
       {/* Actions */}
       <section className="flex gap-3">
         {proposal.status === 'draft' && (
-          <SendProposalButton proposalId={proposal.id} hasClientEmail={!!client?.email} />
+          <SendProposalButton proposalId={proposal.id} hasClientEmail={!!client?.email} hasVerifiedAddress={!!client?.property_place_id} />
         )}
 
         <a

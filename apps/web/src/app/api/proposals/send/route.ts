@@ -39,13 +39,20 @@ export async function POST(request: Request) {
   // Load client
   const { data: client } = await supabase
     .from('clients')
-    .select('name, email')
+    .select('name, email, property_place_id')
     .eq('id', proposal.client_id)
     .single();
 
   if (!client?.email) {
     return NextResponse.json(
       { error: 'Client has no email address. Add an email to send the proposal.' },
+      { status: 400 },
+    );
+  }
+
+  if (!client.property_place_id) {
+    return NextResponse.json(
+      { error: 'Client property address is not verified. Verify the address before sending a proposal.' },
       { status: 400 },
     );
   }

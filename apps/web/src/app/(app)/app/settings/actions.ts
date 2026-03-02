@@ -71,3 +71,36 @@ export async function updateAiSettings(formData: FormData) {
 
   revalidatePath('/app/settings');
 }
+
+export async function updateCompanyAddress(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error('Not authenticated');
+
+  const company = await getActiveCompany(supabase, user.id);
+  if (!company) throw new Error('No company found');
+
+  const addressRaw = (formData.get('company_address') as string)?.trim() || null;
+  const placeId = (formData.get('company_address_place_id') as string)?.trim() || null;
+  const formatted = (formData.get('company_address_formatted') as string)?.trim() || null;
+  const lat = formData.get('company_address_lat') ? parseFloat(formData.get('company_address_lat') as string) : null;
+  const lng = formData.get('company_address_lng') ? parseFloat(formData.get('company_address_lng') as string) : null;
+
+  const { error } = await supabase
+    .from('companies')
+    .update({
+      address_raw: addressRaw,
+      address_place_id: placeId,
+      address_formatted: formatted,
+      address_lat: lat,
+      address_lng: lng,
+    })
+    .eq('id', company.companyId);
+
+  if (error) throw new Error('Failed to update company address');
+
+  revalidatePath('/app/settings');
+}

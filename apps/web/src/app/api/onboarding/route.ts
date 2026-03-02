@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
   // ---- Create Company ----
   if (action === 'create_company') {
-    const { company_name, full_name } = body;
+    const { company_name, full_name, company_address, company_address_place_id, company_address_formatted, company_address_lat, company_address_lng } = body;
     if (!company_name?.trim()) {
       return NextResponse.json({ error: 'Company name is required' }, { status: 400 });
     }
@@ -39,6 +39,11 @@ export async function POST(request: NextRequest) {
         slug,
         plan: 'trial',
         trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        address_place_id: company_address_place_id?.trim() || null,
+        address_formatted: company_address_formatted?.trim() || null,
+        address_lat: company_address_lat ? parseFloat(company_address_lat) : null,
+        address_lng: company_address_lng ? parseFloat(company_address_lng) : null,
+        address_raw: company_address?.trim() || null,
       })
       .select('id')
       .single();
@@ -132,7 +137,7 @@ export async function POST(request: NextRequest) {
 
   // ---- Create Client ----
   if (action === 'create_client') {
-    const { company_id, client_name, client_email, client_address } = body;
+    const { company_id, client_name, client_email, client_address, client_address_place_id, client_address_formatted, client_address_lat, client_address_lng } = body;
     if (!company_id) {
       return NextResponse.json({ error: 'Missing company' }, { status: 400 });
     }
@@ -148,7 +153,12 @@ export async function POST(request: NextRequest) {
         name: client_name.trim(),
         email: client_email?.trim() || null,
         phone: null,
-        address: client_address?.trim() || null,
+        address: client_address_formatted?.trim() || client_address?.trim() || null,
+        property_place_id: client_address_place_id?.trim() || null,
+        property_formatted: client_address_formatted?.trim() || null,
+        property_lat: client_address_lat ? parseFloat(client_address_lat) : null,
+        property_lng: client_address_lng ? parseFloat(client_address_lng) : null,
+        property_address_raw: client_address?.trim() || null,
         status: 'lead',
       });
 

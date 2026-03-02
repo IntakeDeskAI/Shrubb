@@ -44,6 +44,7 @@ export interface Database {
           client_id: string | null;
           name: string;
           address: string | null;
+          place_id: string | null;
           status: string;
           preferences: ProjectPreferences;
           climate_zone: string | null;
@@ -58,6 +59,7 @@ export interface Database {
           client_id?: string | null;
           name: string;
           address?: string | null;
+          place_id?: string | null;
           status?: string;
           preferences?: ProjectPreferences;
           climate_zone?: string | null;
@@ -70,6 +72,7 @@ export interface Database {
           company_id?: string | null;
           client_id?: string | null;
           address?: string | null;
+          place_id?: string | null;
           status?: string;
           preferences?: ProjectPreferences;
           climate_zone?: string | null;
@@ -374,6 +377,11 @@ export interface Database {
           stripe_subscription_id: string | null;
           trial_ends_at: string | null;
           plan: string;
+          address_place_id: string | null;
+          address_formatted: string | null;
+          address_lat: number | null;
+          address_lng: number | null;
+          address_raw: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -385,6 +393,11 @@ export interface Database {
           stripe_subscription_id?: string | null;
           trial_ends_at?: string | null;
           plan?: string;
+          address_place_id?: string | null;
+          address_formatted?: string | null;
+          address_lat?: number | null;
+          address_lng?: number | null;
+          address_raw?: string | null;
         };
         Update: {
           name?: string;
@@ -393,6 +406,11 @@ export interface Database {
           stripe_subscription_id?: string | null;
           trial_ends_at?: string | null;
           plan?: string;
+          address_place_id?: string | null;
+          address_formatted?: string | null;
+          address_lat?: number | null;
+          address_lng?: number | null;
+          address_raw?: string | null;
         };
       };
       company_members: {
@@ -421,6 +439,11 @@ export interface Database {
           email: string | null;
           phone: string | null;
           address: string | null;
+          property_place_id: string | null;
+          property_formatted: string | null;
+          property_lat: number | null;
+          property_lng: number | null;
+          property_address_raw: string | null;
           notes: string | null;
           status: string;
           created_at: string;
@@ -433,6 +456,11 @@ export interface Database {
           email?: string | null;
           phone?: string | null;
           address?: string | null;
+          property_place_id?: string | null;
+          property_formatted?: string | null;
+          property_lat?: number | null;
+          property_lng?: number | null;
+          property_address_raw?: string | null;
           notes?: string | null;
           status?: string;
         };
@@ -441,6 +469,11 @@ export interface Database {
           email?: string | null;
           phone?: string | null;
           address?: string | null;
+          property_place_id?: string | null;
+          property_formatted?: string | null;
+          property_lat?: number | null;
+          property_lng?: number | null;
+          property_address_raw?: string | null;
           notes?: string | null;
           status?: string;
         };

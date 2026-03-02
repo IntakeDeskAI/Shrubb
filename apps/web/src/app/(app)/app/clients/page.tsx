@@ -55,7 +55,8 @@ export default async function ClientsPage() {
           />
           <AddressAutocomplete
             name="client_address"
-            placeholder="Property address"
+            placeholder="Property address (verified)"
+            enforceVerified
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
           />
           <button
@@ -99,7 +100,12 @@ export default async function ClientsPage() {
                     </Link>
                   </td>
                   <td className="py-4 pr-4 text-gray-500">{c.email ?? '—'}</td>
-                  <td className="py-4 pr-4 text-gray-500">{c.address ?? '—'}</td>
+                  <td className="py-4 pr-4 text-gray-500">
+                    {c.property_formatted || c.address || '—'}
+                    {(c.address || c.property_address_raw) && !c.property_place_id && (
+                      <span className="ml-1.5 text-amber-500" title="Unverified address">⚠️</span>
+                    )}
+                  </td>
                   <td className="py-4 pr-4">
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${

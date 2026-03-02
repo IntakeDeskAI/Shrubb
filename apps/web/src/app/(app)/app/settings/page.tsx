@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { getActiveCompany } from '@/lib/company';
 import { B2B_ADDONS, type B2BAddonName } from '@landscape-ai/shared';
-import { updateProfile, updateAiSettings } from './actions';
+import { updateProfile, updateAiSettings, updateCompanyAddress } from './actions';
+import { CompanyAddressForm } from './company-address-form';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -212,7 +213,7 @@ export default async function SettingsPage() {
   const company = await getActiveCompany(supabase, user.id);
 
   // Fetch data in parallel (company-scoped)
-  const [entitlementsRes, purchasesRes, profileRes, phoneRes, settingsRes] = await Promise.all([
+  const [entitlementsRes, purchasesRes, profileRes, phoneRes, settingsRes, companyAddressRes] = await Promise.all([
     company
       ? supabase
           .from('entitlements')
@@ -248,6 +249,13 @@ export default async function SettingsPage() {
           .eq('company_id', company.companyId)
           .maybeSingle()
       : Promise.resolve({ data: null }),
+    company
+      ? supabase
+          .from('companies')
+          .select('address_place_id, address_formatted, address_lat, address_lng, address_raw')
+          .eq('id', company.companyId)
+          .single()
+      : Promise.resolve({ data: null }),
   ]);
 
   const entitlements = entitlementsRes.data as Entitlements | null;
@@ -255,6 +263,13 @@ export default async function SettingsPage() {
   const profile = profileRes.data as Profile | null;
   const phoneNumber = phoneRes.data as PhoneNumber | null;
   const aiSettings = settingsRes.data as CompanySettingsRow | null;
+  const companyAddress = companyAddressRes.data as {
+    address_place_id: string | null;
+    address_formatted: string | null;
+    address_lat: number | null;
+    address_lng: number | null;
+    address_raw: string | null;
+  } | null;
 
   const hasEntitlements = entitlements && entitlements.tier !== 'none';
 
@@ -384,6 +399,20 @@ export default async function SettingsPage() {
             <span className="ml-2 text-gray-400">·</span>
             <span className="ml-2 capitalize text-gray-500">{company.role}</span>
           </p>
+
+          {/* Company Address */}
+          <div className="mt-6 border-t border-gray-100 pt-5">
+            <h3 className="text-sm font-semibold text-gray-900">Business Address</h3>
+            {companyAddress?.address_raw && !companyAddress.address_place_id && (
+              <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                Your business address has not been verified. Please select from the autocomplete suggestions below.
+              </div>
+            )}
+            <CompanyAddressForm
+              action={updateCompanyAddress}
+              defaultAddress={companyAddress?.address_formatted ?? companyAddress?.address_raw ?? ''}
+            />
+          </div>
         </section>
       )}
 

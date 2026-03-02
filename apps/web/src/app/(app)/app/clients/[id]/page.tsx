@@ -234,6 +234,28 @@ export default async function ClientDetailPage({ params }: ClientDetailProps) {
         </p>
       </div>
 
+      {/* Verify address banner */}
+      {(client.address || client.property_address_raw) && !client.property_place_id && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <div className="flex items-start gap-3">
+            <svg className="h-5 w-5 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-amber-800">
+                Verify address to enable accurate proposals and sending.
+              </p>
+              <p className="mt-1 text-xs text-amber-600">
+                Current address: {client.address || client.property_address_raw}
+              </p>
+              <p className="mt-1 text-xs text-amber-600">
+                Update the property address below and select from the autocomplete to verify.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Edit form */}
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900">Client Details</h2>
@@ -279,12 +301,13 @@ export default async function ClientDetailPage({ params }: ClientDetailProps) {
             </div>
             <div>
               <label htmlFor="client_address" className="block text-sm font-medium text-gray-700">
-                Property Address
+                Property Address (verified)
               </label>
               <AddressAutocomplete
                 id="client_address"
                 name="client_address"
-                defaultValue={client.address ?? ''}
+                defaultValue={client.property_formatted ?? client.address ?? ''}
+                enforceVerified
                 className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               />
             </div>

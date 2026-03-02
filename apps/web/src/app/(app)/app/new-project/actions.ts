@@ -27,6 +27,9 @@ export async function createProject(formData: FormData) {
   const inputType = formData.get('inputType') as 'photo' | 'address';
   const address = formData.get('address') as string | null;
   const photoFile = formData.get('photo') as File | null;
+  const addressPlaceId = formData.get('address_place_id') as string | null;
+  const addressLat = formData.get('address_lat') ? parseFloat(formData.get('address_lat') as string) : null;
+  const addressLng = formData.get('address_lng') ? parseFloat(formData.get('address_lng') as string) : null;
 
   const preferences: Record<string, unknown> = {
     style: formData.get('style') as string,
@@ -63,6 +66,9 @@ export async function createProject(formData: FormData) {
       company_id: companyId,
       name: projectName,
       address: address?.trim() || null,
+      place_id: addressPlaceId || null,
+      lat: addressLat,
+      lng: addressLng,
       status: 'setup',
       preferences,
     })

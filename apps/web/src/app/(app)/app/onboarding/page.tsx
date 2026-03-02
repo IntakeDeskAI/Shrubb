@@ -32,6 +32,11 @@ function StepCompany({
           action: 'create_company',
           company_name: form.get('company_name'),
           full_name: form.get('full_name'),
+          company_address: form.get('company_address'),
+          company_address_place_id: form.get('company_address_place_id'),
+          company_address_formatted: form.get('company_address_formatted'),
+          company_address_lat: form.get('company_address_lat'),
+          company_address_lng: form.get('company_address_lng'),
         }),
       });
 
@@ -95,6 +100,22 @@ function StepCompany({
             required
             placeholder="Green Valley Landscapes"
             className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="company_address"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Company Address
+          </label>
+          <AddressAutocomplete
+            id="company_address"
+            name="company_address"
+            placeholder="123 Main St, City, State"
+            enforceVerified
+            required
           />
         </div>
 
@@ -221,6 +242,10 @@ function StepClient({ companyId }: { companyId: string }) {
           client_name: clientName,
           client_email: form.get('client_email'),
           client_address: form.get('client_address'),
+          client_address_place_id: form.get('client_address_place_id'),
+          client_address_formatted: form.get('client_address_formatted'),
+          client_address_lat: form.get('client_address_lat'),
+          client_address_lng: form.get('client_address_lng'),
         }),
       });
 
@@ -293,13 +318,13 @@ function StepClient({ companyId }: { companyId: string }) {
             htmlFor="client_address"
             className="block text-sm font-medium text-gray-700"
           >
-            Property Address
+            Property Address (verified)
           </label>
           <AddressAutocomplete
             id="client_address"
             name="client_address"
             placeholder="123 Oak Street, Austin, TX"
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+            enforceVerified
           />
         </div>
 
