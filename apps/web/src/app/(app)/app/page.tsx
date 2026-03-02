@@ -47,40 +47,41 @@ export default async function AppHome() {
     .eq('company_id', companyId)
     .order('created_at', { ascending: false });
 
-  // Load response time stats
-  const { data: responseStats } = await supabase
-    .from('conversations')
-    .select('first_inbound_at, first_response_at')
-    .eq('account_id', companyId)
-    .not('first_inbound_at', 'is', null)
-    .not('first_response_at', 'is', null)
-    .order('created_at', { ascending: false })
-    .limit(50);
-
-  let avgResponseSeconds: number | null = null;
-  if (responseStats && responseStats.length > 0) {
-    const times = responseStats
-      .filter((r) => r.first_inbound_at && r.first_response_at)
-      .map((r) => {
-        const inbound = new Date(r.first_inbound_at!).getTime();
-        const response = new Date(r.first_response_at!).getTime();
-        return (response - inbound) / 1000;
-      })
-      .filter((t) => t >= 0 && t < 86400);
-    if (times.length > 0) {
-      avgResponseSeconds = Math.round(times.reduce((a, b) => a + b, 0) / times.length);
-    }
-  }
-
-  // Load new lead count (last 7 days)
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const { count: newLeadsCount } = await supabase
-    .from('leads')
+
+  // ── 5 Funnel Metrics ──
+
+  // 1. Calls answered this week
+  const { count: callsAnsweredCount } = await supabase
+    .from('calls')
+    .select('id', { count: 'exact', head: true })
+    .in('conversation_id',
+      (await supabase
+        .from('conversations')
+        .select('id')
+        .eq('account_id', companyId)
+      ).data?.map((c) => c.id) ?? ['__none__']
+    )
+    .eq('status', 'completed')
+    .gte('started_at', weekAgo);
+
+  // 2. Leads qualified (conversations with AI response this week)
+  const { count: leadsQualifiedCount } = await supabase
+    .from('conversations')
     .select('id', { count: 'exact', head: true })
     .eq('account_id', companyId)
+    .not('first_response_at', 'is', null)
+    .gte('first_inbound_at', weekAgo);
+
+  // 3. Estimates ready (draft proposals this week)
+  const { count: estimatesReadyCount } = await supabase
+    .from('proposals')
+    .select('id', { count: 'exact', head: true })
+    .eq('company_id', companyId)
+    .eq('status', 'draft')
     .gte('created_at', weekAgo);
 
-  // Count proposals sent this week
+  // 4. Proposals sent this week
   const { count: proposalsSentCount } = await supabase
     .from('proposals')
     .select('id', { count: 'exact', head: true })
@@ -88,7 +89,67 @@ export default async function AppHome() {
     .in('status', ['sent', 'viewed', 'accepted'])
     .gte('sent_at', weekAgo);
 
-  // Load recent leads with conversations for status derivation
+  // 5. Accepted this week
+  const { count: acceptedCount } = await supabase
+    .from('proposals')
+    .select('id', { count: 'exact', head: true })
+    .eq('company_id', companyId)
+    .eq('status', 'accepted')
+    .gte('accepted_at', weekAgo);
+
+  // ── Activity Feed ──
+  type ActivityItem = {
+    type: string;
+    label: string;
+    detail: string;
+    date: string;
+    href: string;
+  };
+
+  const activityItems: ActivityItem[] = [];
+
+  // Recent proposal views
+  const { data: recentViews } = await supabase
+    .from('proposals')
+    .select('id, viewed_at, clients ( name )')
+    .eq('company_id', companyId)
+    .not('viewed_at', 'is', null)
+    .order('viewed_at', { ascending: false })
+    .limit(5);
+
+  for (const v of recentViews ?? []) {
+    const client = v.clients as unknown as { name: string } | null;
+    activityItems.push({
+      type: 'viewed',
+      label: 'Proposal viewed',
+      detail: client?.name ?? 'A client',
+      date: v.viewed_at!,
+      href: `/app/proposals/${v.id}`,
+    });
+  }
+
+  // Recent acceptances
+  const { data: recentAccepted } = await supabase
+    .from('proposals')
+    .select('id, accepted_at, clients ( name )')
+    .eq('company_id', companyId)
+    .eq('status', 'accepted')
+    .not('accepted_at', 'is', null)
+    .order('accepted_at', { ascending: false })
+    .limit(3);
+
+  for (const a of recentAccepted ?? []) {
+    const client = a.clients as unknown as { name: string } | null;
+    activityItems.push({
+      type: 'accepted',
+      label: 'Proposal accepted',
+      detail: client?.name ?? 'A client',
+      date: a.accepted_at!,
+      href: `/app/proposals/${a.id}`,
+    });
+  }
+
+  // Recent new leads
   const { data: recentLeads } = await supabase
     .from('leads')
     .select('id, name, phone, created_at')
@@ -96,7 +157,49 @@ export default async function AppHome() {
     .order('created_at', { ascending: false })
     .limit(5);
 
-  // Get conversations + calls for recent leads to extract project type
+  for (const l of recentLeads ?? []) {
+    activityItems.push({
+      type: 'new_lead',
+      label: 'New lead',
+      detail: l.name || formatPhone(l.phone),
+      date: l.created_at,
+      href: '/app/leads',
+    });
+  }
+
+  // Recent draft estimates
+  const { data: recentDrafts } = await supabase
+    .from('proposals')
+    .select('id, created_at, clients ( name )')
+    .eq('company_id', companyId)
+    .eq('status', 'draft')
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  for (const d of recentDrafts ?? []) {
+    const client = d.clients as unknown as { name: string } | null;
+    activityItems.push({
+      type: 'estimate',
+      label: 'Estimate created',
+      detail: client?.name ?? 'Draft proposal',
+      date: d.created_at,
+      href: `/app/proposals/${d.id}`,
+    });
+  }
+
+  // Sort by date, take top 8
+  activityItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const activityFeed = activityItems.slice(0, 8);
+
+  // Activity icon colors
+  const ACTIVITY_STYLES: Record<string, { icon: string; color: string }> = {
+    accepted: { icon: '✓', color: 'bg-emerald-100 text-emerald-700' },
+    viewed: { icon: '👁', color: 'bg-blue-100 text-blue-700' },
+    new_lead: { icon: '📞', color: 'bg-brand-100 text-brand-700' },
+    estimate: { icon: '📋', color: 'bg-amber-100 text-amber-700' },
+  };
+
+  // ── Recent leads data for lead status ──
   const leadIds = (recentLeads ?? []).map((l) => l.id);
   let leadConversations: { lead_id: string; channel: string; first_response_at: string | null }[] = [];
   let leadCalls: { conversation_id: string; summary_text: string | null; lead_id?: string }[] = [];
@@ -131,26 +234,23 @@ export default async function AppHome() {
       leadSmsMessages = (msgs ?? []) as typeof leadSmsMessages;
     }
 
-    // Tag calls and messages with lead_id via conversation lookup
     const convoToLead = new Map((convos ?? []).map((c) => [c.id, c.lead_id]));
     for (const c of leadCalls) c.lead_id = convoToLead.get(c.conversation_id) ?? undefined;
     for (const m of leadSmsMessages) m.lead_id = convoToLead.get(m.conversation_id) ?? undefined;
   }
 
-  // Load proposals with clients to match leads by phone
+  // Load proposals for lead status derivation
   const { data: allProposals } = await supabase
     .from('proposals')
     .select('id, status, clients ( phone )')
     .eq('company_id', companyId)
     .in('status', ['sent', 'viewed', 'accepted', 'declined']);
 
-  // Build phone → best proposal status map
   const phoneProposalStatus = new Map<string, string>();
   for (const p of allProposals ?? []) {
     const client = p.clients as unknown as { phone: string } | null;
     if (!client?.phone) continue;
     const existing = phoneProposalStatus.get(client.phone);
-    // Priority: accepted > sent/viewed > declined
     if (p.status === 'accepted' || !existing) {
       phoneProposalStatus.set(client.phone, p.status);
     } else if (
@@ -161,7 +261,6 @@ export default async function AppHome() {
     }
   }
 
-  // Derive lead status and project type
   function getLeadStatus(lead: { phone: string; id: string }): {
     label: string;
     color: string;
@@ -172,7 +271,6 @@ export default async function AppHome() {
     if (proposalStatus === 'sent' || proposalStatus === 'viewed')
       return { label: 'Proposal sent', color: 'text-blue-600 bg-blue-50' };
 
-    // Check if there's a conversation with AI response
     const hasResponse = leadConversations.some(
       (c) => c.lead_id === lead.id && c.first_response_at,
     );
@@ -183,16 +281,13 @@ export default async function AppHome() {
   }
 
   function getLeadProjectType(leadId: string): string {
-    // Try call summary first
     const callSummary = leadCalls.find(
       (c) => c.lead_id === leadId && c.summary_text,
     );
     if (callSummary?.summary_text) {
-      // Take first sentence or first 60 chars
       const first = callSummary.summary_text.split(/[.!?]/)[0];
       return first.length > 60 ? first.slice(0, 57) + '...' : first;
     }
-    // Try first inbound SMS
     const firstMsg = leadSmsMessages.find(
       (m) => m.lead_id === leadId,
     );
@@ -215,7 +310,7 @@ export default async function AppHome() {
             href="/app/new-project"
             className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-600"
           >
-            New Project
+            Create Proposal
           </Link>
         ) : (
           <Link
@@ -227,57 +322,110 @@ export default async function AppHome() {
         )}
       </div>
 
-      {/* ─── Stat Cards ─── */}
+      {/* ─── 5 Funnel Metrics ─── */}
       {hasEntitlements && (
         <>
           <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-gray-400">
             This Week
           </p>
-          <div className="mt-3 grid grid-cols-3 gap-4">
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <div className="rounded-lg bg-brand-50 p-4 text-center">
               <p className="text-3xl font-extrabold text-brand-600">
-                {newLeadsCount ?? 0}
+                {callsAnsweredCount ?? 0}
               </p>
               <p className="mt-1 text-[11px] font-medium text-gray-500">
-                Leads captured <Tooltip text="Inbound SMS and calls to your Shrubb number this week" position="bottom" />
+                Calls answered <Tooltip text="Completed inbound calls to your AI number this week" position="bottom" />
               </p>
             </div>
             <div className="rounded-lg bg-green-50 p-4 text-center">
               <p className="text-3xl font-extrabold text-green-600">
-                {avgResponseSeconds !== null
-                  ? formatResponseTime(avgResponseSeconds)
-                  : '—'}
+                {leadsQualifiedCount ?? 0}
               </p>
               <p className="mt-1 text-[11px] font-medium text-gray-500">
-                Avg response <Tooltip text="Average time between first inbound message and AI's first reply" position="bottom" />
+                Leads qualified <Tooltip text="Leads where AI gathered project details this week" position="bottom" />
               </p>
             </div>
             <div className="rounded-lg bg-amber-50 p-4 text-center">
               <p className="text-3xl font-extrabold text-amber-600">
+                {estimatesReadyCount ?? 0}
+              </p>
+              <p className="mt-1 text-[11px] font-medium text-gray-500">
+                Estimates ready <Tooltip text="Draft proposals created this week, ready to review and send" position="bottom" />
+              </p>
+            </div>
+            <div className="rounded-lg bg-blue-50 p-4 text-center">
+              <p className="text-3xl font-extrabold text-blue-600">
                 {proposalsSentCount ?? 0}
               </p>
               <p className="mt-1 text-[11px] font-medium text-gray-500">
                 Proposals sent <Tooltip text="Proposals emailed to clients this week" position="bottom" />
               </p>
             </div>
+            <div className="rounded-lg bg-emerald-50 p-4 text-center">
+              <p className="text-3xl font-extrabold text-emerald-600">
+                {acceptedCount ?? 0}
+              </p>
+              <p className="mt-1 text-[11px] font-medium text-gray-500">
+                Accepted <Tooltip text="Proposals approved by clients this week" position="bottom" />
+              </p>
+            </div>
           </div>
         </>
+      )}
+
+      {/* ─── Activity Feed ─── */}
+      {hasEntitlements && activityFeed.length > 0 && (
+        <div className="mt-6">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+            Recent Activity
+          </p>
+          <div className="mt-3 space-y-2">
+            {activityFeed.map((item, i) => {
+              const style = ACTIVITY_STYLES[item.type] ?? { icon: '•', color: 'bg-gray-100 text-gray-600' };
+              return (
+                <Link
+                  key={`${item.type}-${i}`}
+                  href={item.href}
+                  className="flex items-center gap-3 rounded-lg border border-gray-100 px-4 py-3 transition hover:border-brand-200 hover:shadow-sm"
+                >
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs ${style.color}`}>
+                    {style.icon}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900">
+                      {item.label}
+                    </p>
+                    <p className="truncate text-xs text-gray-500">{item.detail}</p>
+                  </div>
+                  <span className="shrink-0 text-[11px] text-gray-400">
+                    {timeAgo(item.date)}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* ─── Recent Leads ─── */}
       {hasEntitlements && recentLeads && recentLeads.length > 0 && (
         <div className="mt-6">
-          <p className="text-xs font-semibold text-gray-500">
-            Recent Leads <Tooltip text="New = just contacted · Qualified = AI gathered project details · Proposal sent = estimate emailed · Accepted = client approved" position="bottom" />
-          </p>
-          <div className="mt-2 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Recent Leads
+            </p>
+            <Link href="/app/leads" className="text-xs font-medium text-brand-600 hover:text-brand-700">
+              View all →
+            </Link>
+          </div>
+          <div className="mt-3 space-y-2">
             {recentLeads.map((lead) => {
               const status = getLeadStatus(lead);
               const projectType = getLeadProjectType(lead.id);
               return (
                 <Link
                   key={lead.id}
-                  href="/app/inbox"
+                  href="/app/leads"
                   className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-3 transition hover:border-brand-200 hover:shadow-sm"
                 >
                   <div className="min-w-0 flex-1">
@@ -304,12 +452,12 @@ export default async function AppHome() {
       {hasEntitlements && (
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <Link
-            href="/app/inbox"
+            href="/app/leads"
             className="rounded-lg border border-gray-200 bg-white p-4 transition hover:border-brand-200 hover:shadow-sm"
           >
-            <p className="text-xs font-medium text-gray-500">Inbox</p>
+            <p className="text-xs font-medium text-gray-500">Leads</p>
             <p className="mt-1 text-sm font-semibold text-brand-600">
-              View messages &amp; calls
+              View leads &amp; conversations
             </p>
           </Link>
           <Link
@@ -322,10 +470,6 @@ export default async function AppHome() {
             </p>
           </Link>
         </div>
-      )}
-
-      {hasEntitlements && (
-        <HowTo text="Start by adding a client, then create a project to generate an AI landscape design and proposal." className="mt-4" />
       )}
 
       {/* ─── Entitlements Summary ─── */}
