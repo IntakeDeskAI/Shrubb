@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShrubbLogo } from '@/components/shrubb-logo';
 import { AddressAutocomplete } from '@/components/address-autocomplete';
 import { Tooltip } from '@/components/tooltip';
+import { createClient } from '@/lib/supabase/client';
 
 // ---------------------------------------------------------------------------
 // Step 1: Company creation
@@ -419,6 +420,32 @@ function StepIndicator({ current }: { current: number }) {
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // If the user already has a company (e.g. created at signup), skip step 0
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from('company_members')
+      .select('company_id')
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setCompanyId(data.company_id);
+          setStep(1); // skip company creation
+        }
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-8">

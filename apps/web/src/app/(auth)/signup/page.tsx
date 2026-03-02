@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { createCompanyForUser } from '@/lib/create-company';
 import Link from 'next/link';
 import { ShrubbLogo } from '@/components/shrubb-logo';
-import { SubmitButton } from './submit-button';
+import { SignupForm } from './signup-form';
 
 interface SignupPageProps {
   searchParams: Promise<{ error?: string }>;
@@ -18,6 +19,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     const fullName = formData.get('full_name') as string;
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
+    const companyName = formData.get('company_name') as string;
 
     // Use admin API to create user — skips confirmation email entirely
     const admin = await createServiceClient();
@@ -62,7 +64,27 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
       return;
     }
 
-    // Success — session is active, middleware will route to onboarding
+    // Create company immediately so user skips onboarding
+    if (companyName?.trim()) {
+      const serviceClient = await createServiceClient();
+      const result = await createCompanyForUser(serviceClient, {
+        userId: created.user.id,
+        companyName,
+        fullName,
+        companyAddress: formData.get('company_address') as string,
+        companyAddressPlaceId: formData.get('company_address_place_id') as string,
+        companyAddressFormatted: formData.get('company_address_formatted') as string,
+        companyAddressLat: formData.get('company_address_lat') as string,
+        companyAddressLng: formData.get('company_address_lng') as string,
+      });
+
+      if ('error' in result) {
+        // Non-blocking — user can still complete setup via onboarding fallback
+        console.error('Signup: company creation failed', result.error);
+      }
+    }
+
+    // Success — session is active, middleware routes to dashboard (or onboarding if company failed)
     redirect('/app');
   }
 
@@ -99,47 +121,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             Create an Account
           </h1>
 
-          {/* Error message */}
-          {errorMessage && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {errorMessage}
-            </div>
-          )}
+          <SignupForm signup={signup} errorMessage={errorMessage} />
 
-          <form action={signup} className="space-y-4">
-            <div>
-              <input
-                id="full_name"
-                name="full_name"
-                type="text"
-                required
-                placeholder="Full Name"
-                className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              />
-            </div>
-            <div>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                placeholder="Email"
-                className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              />
-            </div>
-            <div>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                minLength={8}
-                placeholder="Password (min 8 characters)"
-                className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              />
-            </div>
-            <SubmitButton>Create Account</SubmitButton>
-          </form>
           <div className="mt-6 flex items-center justify-center gap-4 text-sm">
             <span className="text-gray-500">Already a member?</span>
             <Link
